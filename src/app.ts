@@ -1,5 +1,9 @@
 import express, { response } from "express";
 import cors from "cors";
+import { Request, Response, NextFunction } from "express";
+
+import authRouter from "./routes/auth.routes";
+
 // import cookieParser from "cookie-parser";
 
 import morgan from "morgan";
@@ -25,5 +29,6 @@ app.use(
 );
 
 app.use(express.static(`${__dirname}/public`)); //for serving static files
+app.use("/api/v1/auth", authRouter);
 
 export default app;

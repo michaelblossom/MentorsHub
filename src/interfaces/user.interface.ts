@@ -6,14 +6,14 @@ export interface IUser extends Document {
   email: string;
   password: string;
   passwordComfirm: string;
-  avatar: string;
-  active: boolean;
+  avatar?: string;
+  active?: boolean;
   isVerified?: boolean;
-  otp?: string;
-  otpExpires?: Date;
+  otp: string;
+  otpExpires: any;
   resetOTPPassword?: string;
   resetOTPPasswordExpires?: Date;
-  role: "mentor" | "mentee(student)" | "admin";
+  role?: "mentor" | "mentee(student)" | "admin";
   matricNumber: string;
-  academicYear: string;
+  academicYear: number;
 }
