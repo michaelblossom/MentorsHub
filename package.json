@@ -1,0 +1,35 @@
+{
+  "name": "mentorhub",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/app.js",
+    "dev": "nodemon src/server.ts",
+    "build": "tsc -p .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.0.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^5.13.23",
+    "morgan": "^1.10.0",
+    "nodemailer": "^7.0.5",
+    "nodemon": "^3.1.10",
+    "validator": "^13.15.15"
+  }
+}
