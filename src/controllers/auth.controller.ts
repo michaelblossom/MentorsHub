@@ -83,13 +83,6 @@ const signup = catchAsync(
         new AppError("There is an error in sending the mail. Try again", 500)
       );
     }
-
-    // if (!created) {
-    //   return next(new AppError(`Error creating user! Please try again`, 400));
-    // } else {
-    //   // calling the createAndSendToken function
-    //   createAndSendToken(created, 201, res);
-    // }
   }
 );
 export default { signup };

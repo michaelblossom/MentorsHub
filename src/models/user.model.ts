@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { IUser } from "../interfaces/user.interface";
 import validator from "validator";
+import bcrypt from "bcryptjs";
 
 // TODO:
 const userSchema = new mongoose.Schema<IUser>(
@@ -32,15 +33,15 @@ const userSchema = new mongoose.Schema<IUser>(
       minlenght: 5,
       select: false,
     },
-    passwordConfirm: {
+    passwordComfirm: {
       type: String,
-      //   required: [true, "passwordComfim does not match with the password"],
-      //   validate: {
-      //     validator: function (el: string): any {
-      //       return el === (this as any).password;
-      //     },
-      //     message: "passwords are not the same",
-      //   },
+      required: [true, "passwordComfim does not match with the password"],
+      validate: {
+        validator: function (el: string): any {
+          return el === (this as any).password;
+        },
+        message: "passwords are not the same",
+      },
     },
 
     department: {
@@ -89,6 +90,14 @@ const userSchema = new mongoose.Schema<IUser>(
   },
   { timestamps: true }
 );
+
+// hashing password
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next(); // this line of code simply means that the password can only be encripted only when(created or updated))
+  this.password = await bcrypt.hash(this.password, 12); //encrypting or hashing the password
+  (this as any).passwordComfirm = undefined; //this will delete password confirm field so that it will not be stored in the database
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 
