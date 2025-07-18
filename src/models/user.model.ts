@@ -87,6 +87,7 @@ const userSchema = new mongoose.Schema<IUser>(
       default: true,
       select: false,
     },
+    passwordChangedAt: Date,
   },
   { timestamps: true }
 );
@@ -98,6 +99,13 @@ userSchema.pre("save", async function (next) {
   (this as any).passwordComfirm = undefined; //this will delete password confirm field so that it will not be stored in the database
   next();
 });
+
+// // update changedPasswordAt field for the user(for resetting password)
+// userSchema.pre("save", function (next) {
+//   if (!this.isModified("password") || this.isNew) return next();
+//   (this as any).passwordChangedAt = Date.now() - 1000; // this line of code will set the passwordChangedAt value to the current date after (created or updated)
+//   next();
+// });
 
 const User = mongoose.model("User", userSchema);
 

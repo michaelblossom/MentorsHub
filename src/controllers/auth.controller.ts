@@ -8,6 +8,7 @@ import { IUser } from "../interfaces/user.interface";
 import User from "../models/user.model";
 import * as JWT from "jsonwebtoken";
 import sendEmail from "../utils/email";
+import app from "../app";
 // function to generate token
 const signToken = (id: any) => {
   return JWT.sign({ id: id }, process.env.JWT_SECRET!, {
@@ -16,7 +17,12 @@ const signToken = (id: any) => {
 };
 
 // function to create and send token to client
-const createAndSendToken = (user: any, statusCode: any, res: Response) => {
+const createAndSendToken = (
+  user: any,
+  statusCode: any,
+  res: Response,
+  message: string
+) => {
   // calling signToken function to generate token
   const token = signToken(user._id);
   const cookieExpiresInDays = Number(process.env.JWT_COOKIE_EXPIRES_IN) || 7;
@@ -72,11 +78,11 @@ const signup = catchAsync(
     try {
       await sendEmail({
         email: created.email,
-        subject: "otp for email verification",
-        html: `<h1> tour OTP is: ${otp}<h1>`,
+        subject: "OTP for Email Verification",
+        html: `<h1> Your OTP is: ${otp}<h1>`,
       });
       // calling the createAndSendToken function
-      createAndSendToken(created, 201, res);
+      createAndSendToken(created, 201, res, "You have registered successfully");
     } catch (error) {
       await User.findByIdAndDelete(created.id);
       return next(
@@ -85,4 +91,30 @@ const signup = catchAsync(
     }
   }
 );
-export default { signup };
+
+const verifyAccount = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const otp = req.body.otp;
+    console.log(` this is the otp${otp}`);
+    if (!otp) {
+      return next(new AppError("OTP is missing", 400));
+    }
+    const user = (req as any).user;
+    if (user.otp !== otp) {
+      return next(new AppError("Invalid OTP", 400));
+    }
+    // vhecking  if OTP is expired
+    if (Date.now() > user.otpExpires) {
+      return next(
+        new AppError("OTP has expired. Please request for new OTP", 400)
+      );
+    }
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    createAndSendToken(user, 200, res, "Email has been verified");
+  }
+);
+
+export default { signup, verifyAccount };
