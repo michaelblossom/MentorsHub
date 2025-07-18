@@ -41,6 +41,7 @@ const createAndSendToken = (
 
   res.status(statusCode).json({
     status: "success",
+    message,
     token, //sending the token to the user
     data: {
       user: user,
@@ -154,9 +155,26 @@ const resendOTP = catchAsync(
         new AppError("There is an error in sending the mail. Try again", 500)
       );
     }
+  }
+);
+// loggin a user
+const login = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email, password } = req.body;
+    // 1)check if email and password exist
+    if (!email || !password) {
+      return next(new AppError("please provide email and password", 400));
+    }
 
-    createAndSendToken(user, 200, res, "Email has been verified");
+    //   // 2)check if user exist and password is correct
+    const user = await User.findOne({ email: email }).select("+password");
+    if (!user || !(await user.correctPassword(password, user.password))) {
+      return next(new AppError("incorrect email or password", 401));
+    }
+    //   3)if everything is correct send token
+    //calling createAndSendToken function
+    createAndSendToken(user, 200, res, "You have successfully loggedin");
   }
 );
 
-export default { signup, verifyAccount, resendOTP };
+export default { signup, verifyAccount, resendOTP, login };
