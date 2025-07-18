@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from "express";
 
 import authRouter from "./routes/auth.routes";
 
-// import cookieParser from "cookie-parser";
+import cookieParser from "cookie-parser";
 
 import morgan from "morgan";
 
@@ -19,7 +19,7 @@ if (process.env.NODE_ENV === "development") {
 // body parser
 app.use(express.json({ limit: "10kb" }));
 
-// app.use(cookieParser());
+app.use(cookieParser());
 
 app.use(
   cors({

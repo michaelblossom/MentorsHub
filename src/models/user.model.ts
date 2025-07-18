@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { IUser } from "../interfaces/user.interface";
-// import validator from "validator";
+import validator from "validator";
 
 // TODO:
 const userSchema = new mongoose.Schema<IUser>(
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema<IUser>(
       required: [true, "please provide your email "],
       unique: true,
       lowercase: true,
-      //   validate: [validator.isEmail, "please provide a valid email"],
+      validate: [validator.isEmail, "please provide a valid email"],
     },
     password: {
       type: String,
@@ -32,16 +32,17 @@ const userSchema = new mongoose.Schema<IUser>(
       minlenght: 5,
       select: false,
     },
-    // passwordConfirm: {
-    //   type: String,
-    //   required: [true, "please confirm your password"],
-    //   validate: {
-    //     validator: function (el: any): any {
-    //       return el === (this as any).password;
-    //     },
-    //     message: "passwords are not the same",
-    //   },
-    // },
+    passwordConfirm: {
+      type: String,
+      //   required: [true, "passwordComfim does not match with the password"],
+      //   validate: {
+      //     validator: function (el: string): any {
+      //       return el === (this as any).password;
+      //     },
+      //     message: "passwords are not the same",
+      //   },
+    },
+
     department: {
       type: String,
       default: "Computer Science",
