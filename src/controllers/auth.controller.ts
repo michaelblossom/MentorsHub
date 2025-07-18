@@ -116,5 +116,47 @@ const verifyAccount = catchAsync(
     createAndSendToken(user, 200, res, "Email has been verified");
   }
 );
+const resendOTP = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = (req as any).user;
+    if (!email) {
+      return next(new AppError("Email is need in other to send OTP", 400));
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return next(new AppError("User not found", 400));
+    }
+    if (user.isVerified) {
+      return next(new AppError("This account is already verified", 400));
+    }
+    const newOTP = generateOTP();
+    user.otp = newOTP;
+    user.otpExpires = Date.now() + 24 * 60 * 60 * 1000;
+    await user.save({ validateBeforeSave: false });
 
-export default { signup, verifyAccount };
+    //send email to the user containing the new OTP
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: "Resend OTP for Email Verification",
+        html: `<h1> Your OTP is: ${newOTP}<h1>`,
+      });
+      res.status(200).json({
+        status: "success",
+        message: "A new OTP has been sent to your email",
+      });
+    } catch (error) {
+      user.otp = undefined;
+      user.otpExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      return next(new AppError("There is an error sending email", 500));
+      return next(
+        new AppError("There is an error in sending the mail. Try again", 500)
+      );
+    }
+
+    createAndSendToken(user, 200, res, "Email has been verified");
+  }
+);
+
+export default { signup, verifyAccount, resendOTP };
