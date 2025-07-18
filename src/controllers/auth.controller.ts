@@ -7,7 +7,7 @@ import AppError from "../utils/appError";
 import { IUser } from "../interfaces/user.interface";
 import User from "../models/user.model";
 import * as JWT from "jsonwebtoken";
-
+import sendEmail from "../utils/email";
 // function to generate token
 const signToken = (id: any) => {
   return JWT.sign({ id: id }, process.env.JWT_SECRET!, {
@@ -28,9 +28,10 @@ const createAndSendToken = (user: any, statusCode: any, res: Response) => {
 
   res.cookie("jwt", token, cookiesOptions);
 
-  // removing password field when a user is signedup
+  // removing password, passwordComfirm and otp field when a user is signedup
   user.password = undefined;
   user.passwordComfirm = undefined;
+  user.otp = undefined;
 
   res.status(statusCode).json({
     status: "success",
@@ -68,13 +69,27 @@ const signup = catchAsync(
     };
 
     const created = await User.create(user);
-
-    if (!created) {
-      return next(new AppError(`Error creating user! Please try again`, 400));
-    } else {
+    try {
+      await sendEmail({
+        email: created.email,
+        subject: "otp for email verification",
+        html: `<h1> tour OTP is: ${otp}<h1>`,
+      });
       // calling the createAndSendToken function
       createAndSendToken(created, 201, res);
+    } catch (error) {
+      await User.findByIdAndDelete(created.id);
+      return next(
+        new AppError("There is an error in sending the mail. Try again", 500)
+      );
     }
+
+    // if (!created) {
+    //   return next(new AppError(`Error creating user! Please try again`, 400));
+    // } else {
+    //   // calling the createAndSendToken function
+    //   createAndSendToken(created, 201, res);
+    // }
   }
 );
 export default { signup };
