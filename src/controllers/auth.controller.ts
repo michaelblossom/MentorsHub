@@ -71,6 +71,7 @@ const signup = catchAsync(
       passwordComfirm: req.body.passwordComfirm,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
+      phoneNumber: req.body.phoneNumber,
       matricNumber: req.body.matricNumber,
       academicYear: req.body.academicYear,
     };

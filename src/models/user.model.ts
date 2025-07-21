@@ -47,6 +47,9 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       default: "Computer Science",
     },
+    phoneNumber: {
+      type: String,
+    },
     matricNumber: {
       type: String,
       required: [true, "please provide your matric number "],
