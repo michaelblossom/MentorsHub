@@ -230,7 +230,7 @@ const forgotPassword = catchAsync(
 const resetPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { email, otp, password, passwordComfirm } = req.body;
-    // // 1) get user based on the passwordResetOTP,passwordResetOTPExpires
+    // // 1) get user based on the email, passwordResetOTP,passwordResetOTPExpires
 
     const user = await User.findOne({
       email,
@@ -259,6 +259,34 @@ const resetPassword = catchAsync(
     );
   }
 );
+
+// updating password
+const updatePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    // 1)get the user from the collection
+    const user = await User.findById((req as any).user.id).select("+password");
+    console.log(user);
+    // 2)check if the posted pasted password is correct
+    // calling correctpassword function from usermodel
+    if (
+      !(await user.correctPassword(req.body.passwordCurrent, user.password))
+    ) {
+      return next(new AppError("your current password is wrong", 401));
+    }
+    // 3)if if the posted password is correct, update the user
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    await user.save({ validateBeforeSave: false });
+    // 4)Log user in, send jwt
+    // calling the createAndSendToken function
+    createAndSendToken(
+      user,
+      200,
+      res,
+      " You have successfully changed your password"
+    );
+  }
+);
 export default {
   signup,
   verifyAccount,
@@ -267,4 +295,5 @@ export default {
   logout,
   forgotPassword,
   resetPassword,
+  updatePassword,
 };
