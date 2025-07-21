@@ -150,9 +150,8 @@ const resendOTP = catchAsync(
       user.otp = undefined;
       user.otpExpires = undefined;
       await user.save({ validateBeforeSave: false });
-      return next(new AppError("There is an error sending email", 500));
       return next(
-        new AppError("There is an error in sending the mail. Try again", 500)
+        new AppError("There is an error sending email. please try again", 500)
       );
     }
   }
@@ -177,4 +176,95 @@ const login = catchAsync(
   }
 );
 
-export default { signup, verifyAccount, resendOTP, login };
+const logout = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    res.cookie("token", "loggedout", {
+      expires: new Date(Date.now() + 10 + 1000),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    }),
+      res.status(200).json({
+        status: "success",
+        message: "Logged out successfully",
+      });
+  }
+);
+const forgotPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return next(new AppError("No user found", 400));
+    }
+    //generate password reset otp
+
+    const otp = generateOTP();
+    user.passwordResetOTP = otp;
+    user.passwordResetOTPExpires = Date.now() + 300000;
+    await user.save({ validateBeforeSave: false });
+
+    //send email to the user containing the password reset OTP
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: "Your password reset OTP valid for (5 mins)",
+        html: `<h1> Your passwort reset OTP is: ${otp}<h1>`,
+      });
+      res.status(200).json({
+        status: "success",
+        message: "Your Password reset  OTP has been sent to your email",
+      });
+    } catch (error) {
+      user.passwordResetOTP = undefined;
+      user.passwordResetOTPExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      return next(
+        new AppError("There is an error sending email. please try again", 500)
+      );
+    }
+  }
+);
+
+//RESET PASSWORD
+const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email, otp, password, passwordComfirm } = req.body;
+    // // 1) get user based on the passwordResetOTP,passwordResetOTPExpires
+
+    const user = await User.findOne({
+      email,
+      passwordResetOTP: otp,
+      passwordResetOTPExpires: { $gt: new Date() },
+    });
+
+    // 2) if otp has not expired, and there is user, set the new password
+    if (!user) {
+      return next(
+        new AppError("No user found as a reuslt of invalid or expired OTP", 400)
+      );
+    }
+
+    user.password = password;
+    user.passwordComfirm = passwordComfirm;
+    user.passwordResetOTP = undefined;
+    user.passwordResetOTPExpires = undefined;
+    await user.save();
+    // 3) Log the user in, send JWT
+    createAndSendToken(
+      user,
+      200,
+      res,
+      "Your have successfully reset your password"
+    );
+  }
+);
+export default {
+  signup,
+  verifyAccount,
+  resendOTP,
+  login,
+  logout,
+  forgotPassword,
+  resetPassword,
+};

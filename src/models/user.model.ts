@@ -3,7 +3,6 @@ import { IUser } from "../interfaces/user.interface";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 
-// TODO:
 const userSchema = new mongoose.Schema<IUser>(
   {
     firstName: {
@@ -69,11 +68,11 @@ const userSchema = new mongoose.Schema<IUser>(
       type: Date,
       default: null,
     },
-    resetOTPPassword: {
+    passwordResetOTP: {
       type: String,
       default: null,
     },
-    resetOTPPasswordExpires: {
+    passwordResetOTPExpires: {
       type: Date,
       default: null,
     },

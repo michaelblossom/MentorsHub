@@ -12,8 +12,8 @@ export interface IUser extends Document {
   isVerified?: boolean;
   otp: string;
   otpExpires: any;
-  resetOTPPassword?: string;
-  resetOTPPasswordExpires?: Date;
+  passwordResetOTP?: string;
+  passwordResetOTPExpires?: Date;
   role?: "mentor" | "mentee(student)" | "admin";
   matricNumber: string;
   academicYear: number;
