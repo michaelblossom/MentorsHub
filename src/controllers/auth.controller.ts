@@ -58,6 +58,10 @@ const signup = catchAsync(
 
     if (exists?.email) {
       return next(new AppError(`User ${email} already exists`, 400));
+    } else if (exists?.UserName) {
+      return next(
+        new AppError(`User ${req.body.UserName} already exists`, 400)
+      );
     }
 
     const otp = generateOTP();
@@ -75,6 +79,7 @@ const signup = catchAsync(
       matricNumber: req.body.matricNumber,
       academicYear: req.body.academicYear,
       role: req.body.role,
+      userName: req.body.userName,
     };
 
     const created = await User.create(user);
