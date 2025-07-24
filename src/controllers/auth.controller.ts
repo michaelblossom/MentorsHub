@@ -74,6 +74,7 @@ const signup = catchAsync(
       phoneNumber: req.body.phoneNumber,
       matricNumber: req.body.matricNumber,
       academicYear: req.body.academicYear,
+      role: req.body.role,
     };
 
     const created = await User.create(user);
