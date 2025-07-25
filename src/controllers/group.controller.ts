@@ -71,6 +71,14 @@ const createGroup = catchAsync(
 const addUserToGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
+    // Find the current user
+    const currentUser = await User.findById(id);
+    // check if the current user that want to perform the action is an admin
+    if (currentUser?.role !== "admin") {
+      return next(
+        new AppError("you do not have permission to perforn this action", 403)
+      );
+    }
     const { groupId, userId } = req.body;
 
     //Validate input IDs
@@ -81,13 +89,13 @@ const addUserToGroup = catchAsync(
       return next(new AppError(`Invalid group or user ID`, 400));
     }
 
-    // Find the group
+    // Find the group that the user will be added in
     let group = await Group.findById(groupId);
     if (!group) {
       return next(new AppError(`No group found with this ID:${groupId}`, 400));
     }
 
-    // Find the user
+    // Find the user to be added to the group
     const user = await User.findById(userId);
     if (!user) {
       return next(new AppError(`No user found with this ID:${userId}`, 400));
@@ -114,13 +122,6 @@ const addUserToGroup = catchAsync(
         )
       );
     }
-    // Find the user
-    const currentUser = await User.findById(id);
-    if (currentUser?.role !== "admin") {
-      return next(
-        new AppError("you do not have permission to perforn this action", 403)
-      );
-    }
 
     // Add user to group
     group = await Group.findByIdAndUpdate(
@@ -138,11 +139,13 @@ const addUserToGroup = catchAsync(
       // sending response
       res.status(201).json({
         status: "success",
+        message: "User successfully removed from group",
         data: {
           group: group,
         },
       });
     } catch (error) {
+      // if there is an error sending the email, remove the user from the group
       await Group.findByIdAndUpdate(
         groupId,
         { $pull: { users: userId } },
@@ -154,8 +157,89 @@ const addUserToGroup = catchAsync(
     }
   }
 );
+const removeUserFromGroup = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    //getting the id of the currently logged in use
+    const id = (req as any).user.id;
+    // Find the current user
+    const currentUser = await User.findById(id);
+    // check if the current user that want to perform the action is an admin
+    if (currentUser?.role !== "admin") {
+      return next(
+        new AppError("you do not have permission to perforn this action", 403)
+      );
+    }
+    //getting the groupId and UserId from the body
+    const { groupId, userId } = req.body;
 
-export default { createGroup, addUserToGroup };
-// } catch (error) {
-//     console.error("Error adding user to group:", error);
-//     return res.status(500).json({ message: "Server error", error })
+    // checking if the ObjectIds provided is valid
+    if (
+      !mongoose.Types.ObjectId.isValid(groupId) ||
+      !mongoose.Types.ObjectId.isValid(userId)
+    ) {
+      return next(new AppError(`Invalid group or user ID`, 400));
+    }
+
+    //Check if group exists
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return next(new AppError(`No group found with this ID:${groupId}`, 400));
+    }
+
+    // Check if user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return next(new AppError(`No user found with this ID:${userId}`, 400));
+    }
+
+    // Check if user is actually in the group and also get the index of the user in the users array
+    const userIndex = group.users.findIndex(
+      (id: any) => id.toString() === user._id.toString()
+    );
+    // console.log(userIndex);
+
+    if (userIndex === -1) {
+      return next(
+        new AppError(`User with ID:${userId} is not in this group `, 400)
+      );
+
+      return res.status(400).json({ message: "User is not in this group" });
+    }
+
+    // Remove the user from the group
+    group.users.splice(userIndex, 1);
+    await group.save();
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: "Project Group Notification",
+        html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been removed from : ${group.name}<h1>`,
+      });
+      // sending response
+      res.status(201).json({
+        status: "success",
+        message: "User successfully removed from group",
+        data: {
+          group: group,
+        },
+      });
+    } catch (error) {
+      // if there is an error sending email, add the user back to the group
+      await Group.findByIdAndUpdate(
+        groupId,
+        { $push: { users: userId } },
+        { new: true }
+      );
+      return next(
+        new AppError("There is an error in sending the mail. Try again", 500)
+      );
+    }
+
+    return res.status(200).json({
+      message: "User successfully removed from group",
+      group,
+    });
+  }
+);
+
+export default { createGroup, addUserToGroup, removeUserFromGroup };
