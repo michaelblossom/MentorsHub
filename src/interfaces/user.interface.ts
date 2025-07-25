@@ -7,7 +7,6 @@ export interface IUser extends Document {
   password: string;
   passwordComfirm: string;
   phoneNumber: string;
-  userName: string;
   // passwordChangedAt: any;
   avatar?: string;
   active?: boolean;

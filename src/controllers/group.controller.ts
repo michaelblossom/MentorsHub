@@ -11,7 +11,14 @@ import { runInNewContext } from "vm";
 const createGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
-    let name = req.body.name;
+    const mentorId = req.body.mentor;
+
+    const { name, mentorUserName, maximunGroupSize } = req.body;
+
+    // checking if the ObjectIds provided is valid
+    if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+      return next(new AppError(`Invalid group or user ID`, 400));
+    }
 
     const exists = await Group.findOne({ name });
 
@@ -22,7 +29,6 @@ const createGroup = catchAsync(
     const group: Partial<IGroup> = {
       name,
       mentor: req.body.mentor,
-      mentorUserName: req.body.mentorUserName,
       maximunGroupSize: req.body.maximunGroupSize,
     };
     const user = await User.findById(id);
@@ -38,7 +44,8 @@ const createGroup = catchAsync(
       return next(new AppError(`Error creating Group! Please try again`, 400));
     }
     const userName = req.body.mentorUserName;
-    const mentor = await User.findOne({ userName: userName });
+    const mentor = await User.findById(mentorId);
+
     if (!mentor) {
       return next(
         new AppError(`No mentor found with this username:${userName}`, 400)
