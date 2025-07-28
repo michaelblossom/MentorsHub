@@ -31,12 +31,12 @@ app.use(
 );
 
 app.use(express.static(`${__dirname}/public`)); //for serving static files
+
+app.get('/', (_, res) => {
+  res.send('Hello from MentorsHub API!');
+});
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/groups', groupRouter);
 app.use('/api/v1/projects', projectRouter);
-
-app.use((req, res) => {
-  res.json('Hello from MentorsHub API!');
-});
 
 export default app;
