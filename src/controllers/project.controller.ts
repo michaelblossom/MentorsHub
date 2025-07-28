@@ -29,13 +29,13 @@ const createProject = catchAsync(
       return next(new AppError(`Invalid group  ID`, 400));
     }
 
-    // const exists = await Project.findOne({ name });
-    // console.log(`please show list of projects${exists}`);
+    const projectExists = await Project.findOne({ name });
+    // console.log(`please show list of projects${projectExists}`);
 
-    // // check if topic already exist
-    // if (exists?.topic) {
-    //   return next(new AppError(`Project ${topic} already exists`, 400));
-    // }
+    // check if topic already exist
+    if (projectExists?.topic) {
+      return next(new AppError(`Project ${topic} already exists`, 400));
+    }
 
     // check if group exist
     const group = await Group.findById(groupId);
