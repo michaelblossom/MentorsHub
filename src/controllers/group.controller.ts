@@ -8,6 +8,22 @@ import User from "../models/user.model";
 import sendEmail from "../utils/email";
 import { runInNewContext } from "vm";
 
+// get All review
+const getAllGroups = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const groups = await Group.find();
+
+    res.status(200).json({
+      status: "success",
+      result: groups.length,
+
+      data: {
+        groups: groups,
+      },
+    });
+  }
+);
+
 const createGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
@@ -249,4 +265,9 @@ const removeUserFromGroup = catchAsync(
   }
 );
 
-export default { createGroup, addUserToGroup, removeUserFromGroup };
+export default {
+  createGroup,
+  addUserToGroup,
+  removeUserFromGroup,
+  getAllGroups,
+};

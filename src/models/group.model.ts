@@ -25,7 +25,16 @@ const groupSchema = new mongoose.Schema<IGroup>(
   },
   { timestamps: true }
 );
-
+// groupSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: "mentor",
+//     select: "firstName lastName email role",
+//   }).populate({
+//     path: "users",
+//     select: "firstName lastName email role",
+//   });
+//   next();
+// });
 const Group = mongoose.model("Group", groupSchema);
 
 export default Group;

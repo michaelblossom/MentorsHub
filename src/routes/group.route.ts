@@ -4,6 +4,7 @@ import Protected from "../middlewares/auth.middleware";
 const router = express.Router();
 
 router.post("/", Protected, groupController.createGroup);
+router.get("/", Protected, groupController.getAllGroups);
 router.post("/addUser-to-group", Protected, groupController.addUserToGroup);
 router.post(
   "/removeUser-from-group",
