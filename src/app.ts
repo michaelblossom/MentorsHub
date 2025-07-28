@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from "express";
 
 import authRouter from "./routes/auth.routes";
 import groupRouter from "./routes/group.route";
+import projectRouter from "./routes/project.route";
 
 import cookieParser from "cookie-parser";
 
@@ -32,5 +33,6 @@ app.use(
 app.use(express.static(`${__dirname}/public`)); //for serving static files
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/groups", groupRouter);
+app.use("/api/v1/projects", projectRouter);
 
 export default app;

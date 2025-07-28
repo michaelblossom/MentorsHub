@@ -8,7 +8,7 @@ import User from "../models/user.model";
 import sendEmail from "../utils/email";
 import { runInNewContext } from "vm";
 
-// get All review
+// get All groups
 const getAllGroups = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const groups = await Group.find();
@@ -27,13 +27,13 @@ const getAllGroups = catchAsync(
 const createGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
-    const mentorId = req.body.mentor;
+    // const mentorId = req.body.mentor;
 
-    const { name, mentorUserName, maximunGroupSize } = req.body;
+    const { name, mentorId, maximunGroupSize } = req.body;
 
-    // checking if the ObjectIds provided is valid
+    // checking if the ObjectId provided is valid
     if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-      return next(new AppError(`Invalid group or user ID`, 400));
+      return next(new AppError(`Invalid mentor ID`, 400));
     }
 
     const exists = await Group.findOne({ name });
@@ -59,12 +59,11 @@ const createGroup = catchAsync(
     if (!newGroup) {
       return next(new AppError(`Error creating Group! Please try again`, 400));
     }
-    const userName = req.body.mentorUserName;
     const mentor = await User.findById(mentorId);
 
     if (!mentor) {
       return next(
-        new AppError(`No mentor found with this username:${userName}`, 400)
+        new AppError(`No mentor found with this name:${mentor.name}`, 400)
       );
     }
 
@@ -78,6 +77,8 @@ const createGroup = catchAsync(
       // sending response
       res.status(201).json({
         status: "success",
+        message: "Group was successfully Created",
+
         data: {
           group: newGroup,
         },
@@ -225,8 +226,6 @@ const removeUserFromGroup = catchAsync(
       return next(
         new AppError(`User with ID:${userId} is not in this group `, 400)
       );
-
-      return res.status(400).json({ message: "User is not in this group" });
     }
 
     // Remove the user from the group

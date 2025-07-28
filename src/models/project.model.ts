@@ -24,10 +24,15 @@ const projectSchema = new mongoose.Schema<IProject>(
     file: {
       type: String,
     },
-    users: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: [true, "Project must belong to a user."],
+    },
+    groupId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+      required: [true, "Project must belong to a Group."],
     },
   },
 
