@@ -1,11 +1,11 @@
-import mongoose, { ConnectOptions } from "mongoose";
-import dotenv from "dotenv";
+import mongoose, { ConnectOptions } from 'mongoose';
+import dotenv from 'dotenv';
 
-import app from "./app";
-dotenv.config({ path: "./config.env" });
+import app from './app';
+dotenv.config({ path: './config.env' });
 
 const DB = process.env.DATABASE!.replace(
-  "<password>",
+  '<password>',
   process.env.DATABASE_PASSWORD!
 );
 
@@ -14,11 +14,12 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   } as ConnectOptions)
-  .then((con) => {
-    console.log("Db connection successful");
+  .then(con => {
+    console.log('Db connection successful');
   });
 
 const port = 3000;
-const server = app.listen(port, "0.0.0.0", () => {
+const server = app.listen(port, '0.0.0.0', () => {
   console.log(`App running in port ${port}...`);
 });
+
