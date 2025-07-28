@@ -29,7 +29,7 @@ const createProject = catchAsync(
       return next(new AppError(`Invalid group  ID`, 400));
     }
 
-    const projectExists = await Project.findOne({ name });
+    const projectExists = await Project.findOne({ topic });
     // console.log(`please show list of projects${projectExists}`);
 
     // check if topic already exist
