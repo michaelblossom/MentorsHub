@@ -33,7 +33,7 @@ app.use(
 app.use(express.static(`${__dirname}/public`)); //for serving static files
 
 // Health check should be first
-app.get('/', (_, res) => res.status(200).send('OK'));
+app.get('/', (_, res) => res.status(200).send('Welcome to MentorsHub API'));
 
 // Then other routes
 app.use('/api/v1/auth', authRouter);
