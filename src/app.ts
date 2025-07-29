@@ -32,11 +32,18 @@ app.use(
 
 app.use(express.static(`${__dirname}/public`)); //for serving static files
 
-app.get('/', (_, res) => {
-  res.send('Hello from MentorsHub API!');
-});
+// Health check should be first
+app.get('/', (_, res) => res.status(200).send('OK'));
+
+// Then other routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/groups', groupRouter);
 app.use('/api/v1/projects', projectRouter);
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
 
 export default app;
