@@ -84,7 +84,7 @@ const createGroup = catchAsync(
         },
       });
     } catch (error) {
-      await User.findByIdAndDelete(newGroup.id);
+      await Group.findByIdAndDelete(newGroup.id);
       return next(
         new AppError("There is an error in sending the mail. Try again", 500)
       );

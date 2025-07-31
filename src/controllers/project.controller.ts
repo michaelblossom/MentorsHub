@@ -8,6 +8,17 @@ import Group from "../models/group.model";
 import User from "../models/user.model";
 import sendEmail from "../utils/email";
 
+// functions that will filter out fields tha we dont want to update
+const filterObj = (obj: any, ...allowedFields: string[]) => {
+  const newObj: { [key: string]: any } = {};
+  Object.keys(obj).forEach((el) => {
+    if (allowedFields.includes(el)) {
+      newObj[el] = obj[el];
+    }
+  });
+  return newObj;
+};
+
 const createProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
@@ -24,7 +35,7 @@ const createProject = catchAsync(
         new AppError("you do not have permission to perforn this action", 403)
       );
     }
-    // checking if the ObjectIds provided is valid
+    // checking if the ObjectId provided is valid
     if (!mongoose.Types.ObjectId.isValid(groupId)) {
       return next(new AppError(`Invalid group  ID`, 400));
     }
@@ -92,13 +103,57 @@ const createProject = catchAsync(
         },
       });
     } catch (error) {
-      await User.findByIdAndDelete(newProject.id);
+      await Project.findByIdAndDelete(newProject.id);
       return next(
         new AppError("There is an error in sending the mail. Try again", 500)
       );
     }
   }
 );
+const updateProject = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const project = await Project.findById(req.params.id);
+    //check if project exist
+    if (!project) {
+      return new AppError("No Project found", 400);
+    }
+    // console.log(project);
+    if (project.userId.toString() !== (req as any).user.id) {
+      return next(
+        new AppError("You do not have permission to update this project", 403)
+      );
+    }
+    // console.log(req.file);
+    if (req.body.status) {
+      return next(
+        new AppError(
+          "this route is not for status  update please use  updateMyProject route",
+          400
+        )
+      );
+    }
+
+    // 2)filtering out the unwanted field names that are not allowed to be updated by calling the filterObj function and storing it in filteredBody
+    const filteredBody = filterObj(req.body, "file", "topic", "stage");
+    if (req.file) filteredBody.file = req.file.filename; //saving the name of the newly updated file to file filed
+    // 3)update the project document
+    const updatedProject = await Project.findByIdAndUpdate(
+      req.params.id,
+      filteredBody,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+    res.status(200).json({
+      status: "success",
+      data: {
+        project: updatedProject,
+      },
+    });
+  }
+);
 export default {
   createProject,
+  updateProject,
 };

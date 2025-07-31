@@ -1,6 +1,9 @@
 import express, { response } from "express";
-import cors from "cors";
+// import type { ErrorRequestHandler } from 'express';
 import { Request, Response, NextFunction } from "express";
+import cors from "cors";
+import { Error } from "../src/types/index";
+import AppError from "./utils/appError";
 
 import authRouter from "./routes/auth.routes";
 import groupRouter from "./routes/group.route";
@@ -34,5 +37,23 @@ app.use(express.static(`${__dirname}/public`)); //for serving static files
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/groups", groupRouter);
 app.use("/api/v1/projects", projectRouter);
+
+// Handling undefined routes
+// app.all("*", (req: Request, res: Response, next: NextFunction) => {
+//   return next(
+//     new AppError(`Can't find ${req.originalUrl} on this saver!`, 404)
+//   );
+// });
+
+// Global Error Handling
+// app.use(err:Error,req:Request,res:Response,next:NextFunction) => {
+//   err.statusCode = err.statusCode || 500
+//   err.status = err.status || 'error'
+
+//   res.status(err.statusCode).json({
+//     status: err.status,
+//     message: err.message
+//   });
+// }
 
 export default app;

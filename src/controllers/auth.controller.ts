@@ -52,12 +52,12 @@ const createAndSendToken = (
 // Signup User
 const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    let email = normalize(req.body.email);
+    let _email = normalize(req.body.email);
 
-    const exists = await User.findOne({ email });
+    const exists = await User.findOne({ _email });
 
     if (exists?.email) {
-      return next(new AppError(`User ${email} already exists`, 400));
+      return next(new AppError(`User ${_email} already exists`, 400));
     } else if (exists?.UserName) {
       return next(
         new AppError(`User ${req.body.UserName} already exists`, 400)
@@ -68,7 +68,7 @@ const signup = catchAsync(
     const otpExpires = Date.now() + 24 * 60 * 60 * 1000;
 
     const user: Partial<IUser> = {
-      email,
+      email: _email,
       otp,
       otpExpires,
       password: req.body.password,
@@ -82,6 +82,16 @@ const signup = catchAsync(
     };
 
     const created = await User.create(user);
+    const {
+      department,
+      isVerified,
+      role,
+      email,
+      firstName,
+      lastName,
+      matricNumber,
+      academicYear,
+    } = created;
     try {
       await sendEmail({
         email: created.email,
@@ -89,7 +99,21 @@ const signup = catchAsync(
         html: `<h1> Your OTP is: ${otp}<h1>`,
       });
       // calling the createAndSendToken function
-      createAndSendToken(created, 201, res, "You have registered successfully");
+      createAndSendToken(
+        {
+          department,
+          isVerified,
+          role,
+          email,
+          firstName,
+          lastName,
+          matricNumber,
+          academicYear,
+        },
+        201,
+        res,
+        "You have registered successfully"
+      );
     } catch (error) {
       await User.findByIdAndDelete(created.id);
       return next(
