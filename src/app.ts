@@ -1,9 +1,6 @@
 import express, { response } from "express";
-// import type { ErrorRequestHandler } from 'express';
-import { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import { Error } from "../src/types/index";
-import AppError from "./utils/appError";
+import { Request, Response, NextFunction } from "express";
 
 import authRouter from "./routes/auth.routes";
 import groupRouter from "./routes/group.route";
@@ -28,15 +25,26 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: true, // Allow all origins
     credentials: true,
   })
 );
 
 app.use(express.static(`${__dirname}/public`)); //for serving static files
+
+// Health check should be first
+app.get("/", (_, res) => res.status(200).send("Welcome to MentorsHub API"));
+
+// Then other routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/groups", groupRouter);
 app.use("/api/v1/projects", projectRouter);
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
+});
 
 // Handling undefined routes
 // app.all("*", (req: Request, res: Response, next: NextFunction) => {

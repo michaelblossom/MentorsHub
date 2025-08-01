@@ -1,25 +1,25 @@
-import mongoose from "mongoose";
-import { IGroup } from "../interfaces/group.interface";
+import mongoose from 'mongoose';
+import { IGroup } from '../interfaces/group.interface';
 
 const groupSchema = new mongoose.Schema<IGroup>(
   {
     name: {
       type: String,
-      required: [true, "please provide group name "],
+      required: [true, 'please provide group name '],
     },
-    mentor: {
+    supervisor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: [true, "Group must have a mentor."],
+      ref: 'User',
+      required: [true, 'Group must have a supervisor.'],
     },
-    maximunGroupSize: {
+    maximumGroupSize: {
       type: Number,
-      required: [true, "A group must have a group size"],
+      required: [true, 'A group must have a group size'],
     },
     users: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
       },
     ],
   },
@@ -27,7 +27,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
 );
 // groupSchema.pre(/^find/, function (next) {
 //   this.populate({
-//     path: "mentor",
+//     path: "supervisor",
 //     select: "firstName lastName email role",
 //   }).populate({
 //     path: "users",
@@ -35,6 +35,6 @@ const groupSchema = new mongoose.Schema<IGroup>(
 //   });
 //   next();
 // });
-const Group = mongoose.model("Group", groupSchema);
+const Group = mongoose.model('Group', groupSchema);
 
 export default Group;

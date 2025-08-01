@@ -8,7 +8,7 @@ import { IUser } from "../interfaces/user.interface";
 import User from "../models/user.model";
 import * as JWT from "jsonwebtoken";
 import sendEmail from "../utils/email";
-import app from "../app";
+
 // function to generate token
 const signToken = (id: any) => {
   return JWT.sign({ id: id }, process.env.JWT_SECRET!, {
@@ -33,10 +33,7 @@ const createAndSendToken = (
   };
 
   res.cookie("jwt", token, cookiesOptions);
-
-  // removing password, passwordComfirm and otp field when a user is signedup
   user.password = undefined;
-  user.passwordComfirm = undefined;
   user.otp = undefined;
 
   res.status(statusCode).json({
@@ -72,7 +69,6 @@ const signup = catchAsync(
       otp,
       otpExpires,
       password: req.body.password,
-      passwordComfirm: req.body.passwordComfirm,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       phoneNumber: req.body.phoneNumber,
@@ -259,7 +255,7 @@ const forgotPassword = catchAsync(
 //RESET PASSWORD
 const resetPassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email, otp, password, passwordComfirm } = req.body;
+    const { email, otp, password } = req.body;
     // // 1) get user based on the email, passwordResetOTP,passwordResetOTPExpires
 
     const user = await User.findOne({
@@ -276,7 +272,6 @@ const resetPassword = catchAsync(
     }
 
     user.password = password;
-    user.passwordComfirm = passwordComfirm;
     user.passwordResetOTP = undefined;
     user.passwordResetOTPExpires = undefined;
     await user.save();
