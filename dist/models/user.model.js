@@ -43,16 +43,6 @@ const userSchema = new mongoose_1.default.Schema({
         minlenght: 5,
         select: false,
     },
-    passwordComfirm: {
-        type: String,
-        required: [true, "passwordComfim does not match with the password"],
-        validate: {
-            validator: function (el) {
-                return el === this.password;
-            },
-            message: "passwords are not the same",
-        },
-    },
     department: {
         type: String,
         default: "Computer Science",
@@ -99,7 +89,6 @@ const userSchema = new mongoose_1.default.Schema({
         default: true,
         select: false,
     },
-    // passwordChangedAt: Date,
 }, { timestamps: true });
 // hashing password
 userSchema.pre("save", function (next) {
