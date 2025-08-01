@@ -1,20 +1,20 @@
-import mongoose from "mongoose";
-import { IUser } from "../interfaces/user.interface";
-import validator from "validator";
-import bcrypt from "bcryptjs";
+import mongoose from 'mongoose';
+import { IUser } from '../interfaces/user.interface';
+import validator from 'validator';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema<IUser>(
   {
     firstName: {
       type: String,
-      required: [true, "please provide your first name"],
+      required: [true, 'please provide your first name'],
       trim: true,
       minlenght: 3,
       maxlenght: 20,
     },
     lastName: {
       type: String,
-      required: [true, "please provide your last name"],
+      required: [true, 'please provide your last name'],
       trim: true,
       minlenght: 3,
       maxlenght: 20,
@@ -22,42 +22,32 @@ const userSchema = new mongoose.Schema<IUser>(
 
     email: {
       type: String,
-      required: [true, "please provide your email "],
+      required: [true, 'please provide your email '],
       unique: true,
       lowercase: true,
-      validate: [validator.isEmail, "please provide a valid email"],
+      validate: [validator.isEmail, 'please provide a valid email'],
     },
     password: {
       type: String,
-      required: [true, "please provide your password "],
+      required: [true, 'please provide your password '],
       minlenght: 5,
       select: false,
-    },
-    passwordComfirm: {
-      type: String,
-      required: [true, "passwordComfim does not match with the password"],
-      validate: {
-        validator: function (el: string): any {
-          return el === (this as any).password;
-        },
-        message: "passwords are not the same",
-      },
     },
 
     department: {
       type: String,
-      default: "Computer Science",
+      default: 'Computer Science',
     },
     phoneNumber: {
       type: String,
     },
     matricNumber: {
       type: String,
-      required: [true, "please provide your matric number "],
+      required: [true, 'please provide your matric number '],
     },
     academicYear: {
       type: Number,
-      required: [true, "please provide your matric number "],
+      required: [true, 'please provide your matric number '],
     },
     avatar: { type: String },
     isVerified: {
@@ -82,8 +72,8 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ["mentor", "mentee(student)", "admin"],
-      default: "mentee(student)",
+      enum: ['mentor', 'mentee(student)', 'admin'],
+      default: 'mentee(student)',
     },
     active: {
       type: Boolean,
@@ -96,10 +86,9 @@ const userSchema = new mongoose.Schema<IUser>(
 );
 
 // hashing password
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); // this line of code simply means that the password can only be encripted only when(created or updated))
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next(); // this line of code simply means that the password can only be encripted only when(created or updated))
   this.password = await bcrypt.hash(this.password, 12); //encrypting or hashing the password
-  (this as any).passwordComfirm = undefined; //this will delete password confirm field so that it will not be stored in the database
   next();
 });
 
@@ -117,6 +106,6 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 
 export default User;

@@ -96,7 +96,6 @@ userSchema.pre("save", function (next) {
         if (!this.isModified("password"))
             return next(); // this line of code simply means that the password can only be encripted only when(created or updated))
         this.password = yield bcryptjs_1.default.hash(this.password, 12); //encrypting or hashing the password
-        this.passwordComfirm = undefined; //this will delete password confirm field so that it will not be stored in the database
         next();
     });
 });
