@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema<IUser>(
       minlenght: 3,
       maxlenght: 20,
     },
-
     email: {
       type: String,
       required: [true, 'please provide your email '],
@@ -43,11 +42,28 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     matricNumber: {
       type: String,
-      required: [true, 'please provide your matric number '],
+      validate: {
+        validator: function (this: mongoose.Document & IUser, value: string) {
+          if (this.role === 'student') {
+            return !!value && value.trim().length > 0;
+          }
+          return true;
+        },
+        message: 'Matric number is required for students',
+      },
     },
+
     academicYear: {
       type: Number,
-      required: [true, 'please provide your matric number '],
+      validate: {
+        validator: function (this: mongoose.Document & IUser, value: number) {
+          if (this.role === 'student') {
+            return value !== null && value !== undefined;
+          }
+          return true;
+        },
+        message: 'Academic year is required for students',
+      },
     },
     avatar: { type: String },
     isVerified: {
@@ -72,15 +88,14 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['mentor', 'mentee(student)', 'admin'],
-      default: 'mentee(student)',
+      enum: ['supervisor', 'student', 'admin'],
+      default: 'student',
     },
     active: {
       type: Boolean,
       default: true,
       select: false,
     },
-    // passwordChangedAt: Date,
   },
   { timestamps: true }
 );

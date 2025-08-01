@@ -1,4 +1,4 @@
-import { Document } from "mongoose";
+import { Document } from 'mongoose';
 export interface IUser extends Document {
   department?: string;
   firstName: string;
@@ -14,7 +14,7 @@ export interface IUser extends Document {
   otpExpires: any;
   passwordResetOTP?: string;
   passwordResetOTPExpires?: Date;
-  role?: "mentor" | "mentee(student)" | "admin";
+  role?: 'supervisor' | 'student' | 'admin';
   matricNumber: string;
   academicYear: number;
 }

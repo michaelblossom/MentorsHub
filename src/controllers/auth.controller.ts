@@ -8,7 +8,7 @@ import { IUser } from '../interfaces/user.interface';
 import User from '../models/user.model';
 import * as JWT from 'jsonwebtoken';
 import sendEmail from '../utils/email';
-import app from '../app';
+
 // function to generate token
 const signToken = (id: any) => {
   return JWT.sign({ id: id }, process.env.JWT_SECRET!, {
@@ -33,8 +33,6 @@ const createAndSendToken = (
   };
 
   res.cookie('jwt', token, cookiesOptions);
-
-  // removing password, passwordComfirm and otp field when a user is signedup
   user.password = undefined;
   user.otp = undefined;
 
