@@ -6,7 +6,7 @@ const reviewSchema = new mongoose.Schema<IReview>(
       type: String,
       required: [true, "Review can not be empty"],
     },
-    projectCharpter: {
+    projectChapter: {
       type: String,
       required: [true, "Review must belong to a certain project charpter"],
     },
