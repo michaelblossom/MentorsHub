@@ -34,12 +34,7 @@ const Protected = catchAsync(
     const currentUser = await User.findById(decoded.id); //we are using findById because we use our id as our payload in generating the token that is stored in our decoded
 
     if (!currentUser) {
-      return next(
-        new AppError(
-          "The User belonging to this token does not exist anylonger",
-          401
-        )
-      );
+      return next(new AppError(" User does not exist", 401));
     }
     // //   // 4)check if user change password after token was issued
     // //   // calling passwordchangedAfter function from userModel

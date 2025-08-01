@@ -51,78 +51,72 @@ const signup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     let _email = normalize(req.body.email);
 
-    const exists = await User.findOne({ _email });
+    const exists = await User.findOne({ email: _email });
+    if (!exists?.email) {
+      const otp = generateOTP();
+      const otpExpires = Date.now() + 24 * 60 * 60 * 1000;
 
-    if (exists?.email) {
-      return next(new AppError(`User ${_email} already exists`, 400));
-    } else if (exists?.UserName) {
-      return next(
-        new AppError(`User ${req.body.UserName} already exists`, 400)
-      );
+      const user: Partial<IUser> = {
+        email: _email,
+        otp,
+        otpExpires,
+        password: req.body.password,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        phoneNumber: req.body.phoneNumber,
+        matricNumber: req.body.matricNumber,
+        academicYear: req.body.academicYear,
+        role: req.body.role,
+      };
+
+      const created = await User.create(user);
+      const {
+        department,
+        isVerified,
+        role,
+        email,
+        firstName,
+        lastName,
+        matricNumber,
+        academicYear,
+      } = created;
+      try {
+        await sendEmail({
+          email: created.email,
+          subject: "OTP for Email Verification",
+          html: `<h1> Your OTP is: ${otp}<h1>`,
+        });
+        // calling the createAndSendToken function
+        createAndSendToken(
+          {
+            department,
+            isVerified,
+            role,
+            email,
+            firstName,
+            lastName,
+            matricNumber,
+            academicYear,
+          },
+          201,
+          res,
+          "You have registered successfully"
+        );
+      } catch (error) {
+        await User.findByIdAndDelete(created.id);
+        return next(
+          new AppError("There is an error in sending the mail. Try again", 500)
+        );
+      }
     }
-
-    const otp = generateOTP();
-    const otpExpires = Date.now() + 24 * 60 * 60 * 1000;
-
-    const user: Partial<IUser> = {
-      email: _email,
-      otp,
-      otpExpires,
-      password: req.body.password,
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      phoneNumber: req.body.phoneNumber,
-      matricNumber: req.body.matricNumber,
-      academicYear: req.body.academicYear,
-      role: req.body.role,
-    };
-
-    const created = await User.create(user);
-    const {
-      department,
-      isVerified,
-      role,
-      email,
-      firstName,
-      lastName,
-      matricNumber,
-      academicYear,
-    } = created;
-    try {
-      await sendEmail({
-        email: created.email,
-        subject: "OTP for Email Verification",
-        html: `<h1> Your OTP is: ${otp}<h1>`,
-      });
-      // calling the createAndSendToken function
-      createAndSendToken(
-        {
-          department,
-          isVerified,
-          role,
-          email,
-          firstName,
-          lastName,
-          matricNumber,
-          academicYear,
-        },
-        201,
-        res,
-        "You have registered successfully"
-      );
-    } catch (error) {
-      await User.findByIdAndDelete(created.id);
-      return next(
-        new AppError("There is an error in sending the mail. Try again", 500)
-      );
-    }
+    return next(new AppError(`User already exists`, 400));
   }
 );
 
 const verifyAccount = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const otp = req.body.otp;
-    console.log(` this is the otp${otp}`);
+    // console.log(` this is the otp${otp}`);
     if (!otp) {
       return next(new AppError("OTP is missing", 400));
     }
@@ -130,6 +124,16 @@ const verifyAccount = catchAsync(
     if (user.otp !== otp) {
       return next(new AppError("Invalid OTP", 400));
     }
+    // destructuring the user
+    const {
+      passwordResetOTP,
+      passwordResetOTPExpires,
+      otpExpires,
+      createdAt,
+      updatedAt,
+      __v,
+      ...rest
+    } = user;
     // vhecking  if OTP is expired
     if (Date.now() > user.otpExpires) {
       return next(
@@ -140,7 +144,7 @@ const verifyAccount = catchAsync(
     user.otp = undefined;
     user.otpExpires = undefined;
     await user.save({ validateBeforeSave: false });
-    createAndSendToken(user, 200, res, "Email has been verified");
+    createAndSendToken(rest, 200, res, "Email has been verified");
   }
 );
 const resendOTP = catchAsync(
@@ -196,9 +200,20 @@ const login = catchAsync(
     if (!user || !(await user.correctPassword(password, user.password))) {
       return next(new AppError("incorrect email or password", 401));
     }
+    //destructuring the user
+    const {
+      passwordResetOTP,
+      passwordResetOTPExpires,
+      otpExpires,
+      createdAt,
+      updatedAt,
+      __v,
+      ...rest
+    } = user;
+
     //   3)if everything is correct send token
     //calling createAndSendToken function
-    createAndSendToken(user, 200, res, "You have successfully loggedin");
+    createAndSendToken(rest, 200, res, "You have successfully loggedin");
   }
 );
 

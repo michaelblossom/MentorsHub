@@ -1,6 +1,8 @@
 import express, { response } from "express";
 import cors from "cors";
 import { Request, Response, NextFunction } from "express";
+import AppError from "./utils/appError";
+import { Error } from "./types/index";
 
 import authRouter from "./routes/auth.routes";
 import groupRouter from "./routes/group.route";
@@ -42,8 +44,15 @@ app.use("/api/v1/projects", projectRouter);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).send("Something broke!");
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || "error";
+
+  res.status(err.statusCode).json({
+    status: err.status,
+    message: err.message,
+  });
+  // console.error(err.stack);
+  // res.status(500).send("Something broke!");
 });
 
 // Handling undefined routes
