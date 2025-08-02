@@ -149,7 +149,7 @@ const verifyAccount = catchAsync(
 );
 const resendOTP = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { email } = (req as any).user;
+    const email = normalize(req?.body?.email);
     if (!email) {
       return next(new AppError('Email is need in other to send OTP', 400));
     }
