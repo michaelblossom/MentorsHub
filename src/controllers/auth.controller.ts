@@ -79,7 +79,7 @@ const signup = catchAsync(
         });
         // calling the createAndSendToken function
         return createAndSendToken(
-          created,
+          created, // TODO: we need to find out why this doesnt work when certain values are destrcutured
           201,
           res,
           'You have registered successfully'
