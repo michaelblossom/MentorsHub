@@ -182,6 +182,7 @@ const addUserToGroup = catchAsync(
     }
   }
 );
+
 const removeUserFromGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     //getting the id of the currently logged in use

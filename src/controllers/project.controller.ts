@@ -1,11 +1,12 @@
-import mongoose from 'mongoose';
-import { Request, Response, NextFunction } from 'express';
-import catchAsync from '../utils/catchAsync';
+import { NextFunction, Request, Response } from 'express';
+
 import AppError from '../utils/appError';
+import Group from '../models/group.model';
 import { IProject } from '../interfaces/project.interface';
 import Project from '../models/project.model';
-import Group from '../models/group.model';
 import User from '../models/user.model';
+import catchAsync from '../utils/catchAsync';
+import mongoose from 'mongoose';
 import sendEmail from '../utils/email';
 
 // functions that will filter out fields tha we dont want to update
@@ -22,7 +23,7 @@ const filterObj = (obj: any, ...allowedFields: string[]) => {
 const createProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
-    const { name, topic, groupId } = req.body;
+    const { topic, description, groupId } = req.body;
 
     // check if the user creating a project is a student
     const user = await User.findById(id);
@@ -65,7 +66,7 @@ const createProject = catchAsync(
     }
 
     const project: Partial<IProject> = {
-      name,
+      description,
       topic,
       userId: id,
       groupId,
@@ -106,6 +107,7 @@ const createProject = catchAsync(
     }
   }
 );
+
 const updateProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const project = await Project.findById(req.params.id);
