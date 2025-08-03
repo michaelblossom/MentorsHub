@@ -70,16 +70,7 @@ const signup = catchAsync(
       };
 
       const created = await User.create(user);
-      const {
-        department,
-        isVerified,
-        role,
-        email,
-        firstName,
-        lastName,
-        matricNumber,
-        academicYear,
-      } = created;
+
       try {
         await sendEmail({
           email: created.email,
@@ -87,17 +78,8 @@ const signup = catchAsync(
           html: `<h1> Your OTP is: ${otp}<h1>`,
         });
         // calling the createAndSendToken function
-        createAndSendToken(
-          {
-            department,
-            isVerified,
-            role,
-            email,
-            firstName,
-            lastName,
-            matricNumber,
-            academicYear,
-          },
+        return createAndSendToken(
+          created,
           201,
           res,
           'You have registered successfully'
@@ -115,13 +97,12 @@ const signup = catchAsync(
 
 const verifyAccount = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const otp = req.body.otp;
-    // console.log(` this is the otp${otp}`);
+    const otp = req?.body?.otp;
     if (!otp) {
       return next(new AppError('OTP is missing', 400));
     }
     const user = (req as any).user;
-    if (user.otp !== otp) {
+    if (user?.otp !== otp) {
       return next(new AppError('Invalid OTP', 400));
     }
     // destructuring the user
@@ -133,7 +114,7 @@ const verifyAccount = catchAsync(
       updatedAt,
       __v,
       ...rest
-    } = user;
+    } = user.toObject();
     // vhecking  if OTP is expired
     if (Date.now() > user.otpExpires) {
       return next(
@@ -149,7 +130,7 @@ const verifyAccount = catchAsync(
 );
 const resendOTP = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const email = normalize(req?.body?.email);
+    const email = (req as any).user;
     if (!email) {
       return next(new AppError('Email is need in other to send OTP', 400));
     }
@@ -305,7 +286,6 @@ const updatePassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     // 1)get the user from the collection
     const user = await User.findById((req as any).user.id).select('+password');
-    console.log(user);
     // 2)check if the posted pasted password is correct
     // calling correctpassword function from usermodel
     if (
@@ -319,7 +299,7 @@ const updatePassword = catchAsync(
     await user.save({ validateBeforeSave: false });
     // 4)Log user in, send jwt
     // calling the createAndSendToken function
-    createAndSendToken(
+    return createAndSendToken(
       user,
       200,
       res,
