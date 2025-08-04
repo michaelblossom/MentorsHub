@@ -1,5 +1,6 @@
 import express from "express";
 import authController from "./../controllers/auth.controller";
+import userController from "./../controllers/user.controller";
 import Protected from "../middlewares/auth.middleware";
 
 const router = express.Router();
@@ -13,5 +14,7 @@ router.post("/logout", authController.logout);
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.patch("/updateMyPassword", authController.updatePassword);
+
+router.get("/", userController.getAllUsers);
 
 export default router;

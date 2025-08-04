@@ -100,7 +100,7 @@ const userSchema = new mongoose.Schema<IUser>(
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-userSchema.virtual("groups", {
+userSchema.virtual("group", {
   ref: "Group",
   foreignField: "users",
   localField: "_id",
