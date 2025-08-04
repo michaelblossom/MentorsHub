@@ -1,11 +1,13 @@
-import { Response, Request, NextFunction } from "express";
+import * as JWT from 'jsonwebtoken';
+
+import { NextFunction, Request, Response } from 'express';
+
+import AppError from '../utils/appError';
+import User from '../models/user.model';
+import catchAsync from '../utils/catchAsync';
+import { verify } from 'crypto';
 // import { promisify } from "util";
-const { promisify } = require("util"); //builtin function for promifying token verification
-import * as JWT from "jsonwebtoken";
-import User from "../models/user.model";
-import catchAsync from "../utils/catchAsync";
-import AppError from "../utils/appError";
-import { verify } from "crypto";
+const { promisify } = require('util'); //builtin function for promifying token verification
 
 // PROTECT MIDDLEWARE
 const Protected = catchAsync(
@@ -14,16 +16,15 @@ const Protected = catchAsync(
     let token;
     if (
       req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
+      req.headers.authorization.startsWith('Bearer')
     ) {
-      token = req.headers.authorization.split(" ")[1];
+      token = req.headers.authorization.split(' ')[1];
     } else if (req.cookies.JWT) {
       token = (req as any).cookie.JWT;
     }
     if (!token) {
-      // console.log(token);
       return next(
-        new AppError("you are not loggedin, please login to get access", 401)
+        new AppError('you are not loggedin, please login to get access', 401)
       );
     }
     // 2)verify the token
@@ -34,7 +35,7 @@ const Protected = catchAsync(
     const currentUser = await User.findById(decoded.id); //we are using findById because we use our id as our payload in generating the token that is stored in our decoded
 
     if (!currentUser) {
-      return next(new AppError(" User does not exist", 401));
+      return next(new AppError(' User does not exist', 401));
     }
     // console.log(currentUser);
     // //   // 4)check if user change password after token was issued
