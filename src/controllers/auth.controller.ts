@@ -196,7 +196,9 @@ const login = catchAsync(
     }
 
     //   // 2)check if user exist and password is correct
-    const user = await User.findOne({ email: email }).select("+password");
+    const user = await User.findOne({ email: email })
+      .select("+password")
+      .populate("groups");
     if (!user || !(await user.correctPassword(password, user.password))) {
       return next(new AppError("incorrect email or password", 401));
     }
@@ -327,6 +329,7 @@ const updatePassword = catchAsync(
     );
   }
 );
+
 export default {
   signup,
   verifyAccount,
