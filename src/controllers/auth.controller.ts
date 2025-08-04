@@ -134,7 +134,7 @@ const verifyAccount = catchAsync(
       __v,
       ...rest
     } = user;
-    // vhecking  if OTP is expired
+    // checking  if OTP has expired
     if (Date.now() > user.otpExpires) {
       return next(
         new AppError("OTP has expired. Please request for new OTP", 400)
@@ -201,19 +201,19 @@ const login = catchAsync(
       return next(new AppError("incorrect email or password", 401));
     }
     //destructuring the user
-    const {
-      passwordResetOTP,
-      passwordResetOTPExpires,
-      otpExpires,
-      createdAt,
-      updatedAt,
-      __v,
-      ...rest
-    } = user;
+    // const {
+    //   passwordResetOTP,
+    //   passwordResetOTPExpires,
+    //   otpExpires,
+    //   createdAt,
+    //   updatedAt,
+    //   __v,
+    //   ...rest
+    // } = user;
 
     //   3)if everything is correct send token
     //calling createAndSendToken function
-    createAndSendToken(rest, 200, res, "You have successfully loggedin");
+    createAndSendToken(user, 200, res, "You have successfully loggedin");
   }
 );
 

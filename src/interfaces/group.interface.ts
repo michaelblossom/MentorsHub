@@ -1,6 +1,6 @@
 export interface IGroup {
   name: string;
   users?: string[];
-  supervisor: any;
+  supervisor?: any;
   maximunGroupSize: number;
 }

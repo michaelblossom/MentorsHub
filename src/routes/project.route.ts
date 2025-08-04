@@ -5,6 +5,7 @@ import uploadDocumentsControllers from "../controllers/uploadDocuments.controlle
 const router = express.Router();
 
 router.post("/", Protected, projectController.createProject);
+router.get("/", Protected, projectController.getAllProjects);
 router.patch(
   "/:id",
   Protected,

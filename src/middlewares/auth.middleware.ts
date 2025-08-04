@@ -29,13 +29,14 @@ const Protected = catchAsync(
     // 2)verify the token
     // the decoded variable will return the payload({id, time token created , time token expires})
     const decoded = await promisify(JWT.verify)(token, process.env.JWT_SECRET);
-    // console.log(decoded);
+    // console.log(`The decoded is ${decoded}`);
     // 3)check if the user accessing the route still exist
     const currentUser = await User.findById(decoded.id); //we are using findById because we use our id as our payload in generating the token that is stored in our decoded
 
     if (!currentUser) {
       return next(new AppError(" User does not exist", 401));
     }
+    // console.log(currentUser);
     // //   // 4)check if user change password after token was issued
     // //   // calling passwordchangedAfter function from userModel
     // if (currentUser.changedPasswordAfter(decoded.iat)) {
