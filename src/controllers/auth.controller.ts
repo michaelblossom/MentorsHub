@@ -1,12 +1,15 @@
 const { promisify } = require('util'); //builtin function for promifying token verification
-import { normalize } from './../utils/helpers';
-import { generateOTP } from './../utils/generateOTP';
-import { Request, Response, NextFunction } from 'express';
-import catchAsync from '../utils/catchAsync';
+
+import * as JWT from 'jsonwebtoken';
+
+import { NextFunction, Request, Response } from 'express';
+
 import AppError from '../utils/appError';
 import { IUser } from '../interfaces/user.interface';
 import User from '../models/user.model';
-import * as JWT from 'jsonwebtoken';
+import catchAsync from '../utils/catchAsync';
+import { generateOTP } from './../utils/generateOTP';
+import { normalize } from './../utils/helpers';
 import sendEmail from '../utils/email';
 
 // function to generate token
@@ -177,24 +180,26 @@ const login = catchAsync(
     }
 
     //   // 2)check if user exist and password is correct
-    const user = await User.findOne({ email: email }).select('+password');
+    const user = await User.findOne({ email: email })
+      .select("+password")
+      .populate("groups");
     if (!user || !(await user.correctPassword(password, user.password))) {
       return next(new AppError('incorrect email or password', 401));
     }
     //destructuring the user
-    const {
-      passwordResetOTP,
-      passwordResetOTPExpires,
-      otpExpires,
-      createdAt,
-      updatedAt,
-      __v,
-      ...rest
-    } = user.toObject();
+    // const {
+    //   passwordResetOTP,
+    //   passwordResetOTPExpires,
+    //   otpExpires,
+    //   createdAt,
+    //   updatedAt,
+    //   __v,
+    //   ...rest
+    // } = user;
 
     //   3)if everything is correct send token
     //calling createAndSendToken function
-    createAndSendToken(rest, 200, res, 'You have successfully loggedin');
+    createAndSendToken(user, 200, res, "You have successfully loggedin");
   }
 );
 
@@ -307,6 +312,7 @@ const updatePassword = catchAsync(
     );
   }
 );
+
 export default {
   signup,
   verifyAccount,

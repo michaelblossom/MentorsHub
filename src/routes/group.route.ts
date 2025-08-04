@@ -11,5 +11,6 @@ router.post(
   Protected,
   groupController.removeUserFromGroup
 );
+router.patch("/archive-group/:id", Protected, groupController.archiveGroup);
 
 export default router;

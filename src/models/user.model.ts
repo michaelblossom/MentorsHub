@@ -1,41 +1,41 @@
-import mongoose from 'mongoose';
-import { IUser } from '../interfaces/user.interface';
-import validator from 'validator';
-import bcrypt from 'bcryptjs';
+import mongoose from "mongoose";
+import { IUser } from "../interfaces/user.interface";
+import validator from "validator";
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema<IUser>(
   {
     firstName: {
       type: String,
-      required: [true, 'please provide your first name'],
+      required: [true, "please provide your first name"],
       trim: true,
       minlenght: 3,
       maxlenght: 20,
     },
     lastName: {
       type: String,
-      required: [true, 'please provide your last name'],
+      required: [true, "please provide your last name"],
       trim: true,
       minlenght: 3,
       maxlenght: 20,
     },
     email: {
       type: String,
-      required: [true, 'please provide your email '],
+      required: [true, "please provide your email "],
       unique: true,
       lowercase: true,
-      validate: [validator.isEmail, 'please provide a valid email'],
+      validate: [validator.isEmail, "please provide a valid email"],
     },
     password: {
       type: String,
-      required: [true, 'please provide your password '],
+      required: [true, "please provide your password "],
       minlenght: 5,
       select: false,
     },
 
     department: {
       type: String,
-      default: 'Computer Science',
+      default: "Computer Science",
     },
     phoneNumber: {
       type: String,
@@ -44,12 +44,12 @@ const userSchema = new mongoose.Schema<IUser>(
       type: String,
       validate: {
         validator: function (this: mongoose.Document & IUser, value: string) {
-          if (this.role === 'student') {
+          if (this.role === "student") {
             return !!value && value.trim().length > 0;
           }
           return true;
         },
-        message: 'Matric number is required for students',
+        message: "Matric number is required for students",
       },
     },
 
@@ -57,12 +57,12 @@ const userSchema = new mongoose.Schema<IUser>(
       type: Number,
       validate: {
         validator: function (this: mongoose.Document & IUser, value: number) {
-          if (this.role === 'student') {
+          if (this.role === "student") {
             return value !== null && value !== undefined;
           }
           return true;
         },
-        message: 'Academic year is required for students',
+        message: "Academic year is required for students",
       },
     },
     avatar: { type: String },
@@ -88,8 +88,8 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['supervisor', 'student', 'admin'],
-      default: 'student',
+      enum: ["supervisor", "student", "admin"],
+      default: "student",
     },
     active: {
       type: Boolean,
@@ -97,12 +97,18 @@ const userSchema = new mongoose.Schema<IUser>(
       select: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
+userSchema.virtual("groups", {
+  ref: "Group",
+  foreignField: "users",
+  localField: "_id",
+});
+
 // hashing password
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next(); // this line of code simply means that the password can only be encripted only when(created or updated))
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next(); // this line of code simply means that the password can only be encripted only when(created or updated))
   this.password = await bcrypt.hash(this.password, 12); //encrypting or hashing the password
   next();
 });
@@ -121,6 +127,6 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 export default User;

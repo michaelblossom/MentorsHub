@@ -11,6 +11,18 @@ import { runInNewContext } from 'vm';
 // get All groups
 const getAllGroups = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
+    const id = (req as any).user.id;
+    // check if the user fetching all the projects is an admin
+    const user = await User.findById(id);
+    if (!user) {
+      return next(new AppError(`No user found with this ID:${id}`, 400));
+    }
+    console.log(user);
+    if (user?.role !== "admin") {
+      return next(
+        new AppError("you do not have permission to perforn this action", 403)
+      );
+    }
     const groups = await Group.find();
 
     res.status(200).json({
@@ -264,10 +276,34 @@ const removeUserFromGroup = catchAsync(
     });
   }
 );
+// deleteing a user
+const archiveGroup = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = (req as any).user.id;
+    // check if the user fetching all the projects is an admin
+    const user = await User.findById(id);
+    if (!user) {
+      return next(new AppError(`No user found with this ID:${id}`, 400));
+    }
+    console.log(user);
+    if (user?.role !== "admin") {
+      return next(
+        new AppError("you do not have permission to perforn this action", 403)
+      );
+    }
+    await Group.findByIdAndUpdate(req.params.id, { archive: false });
+    res.status(204).json({
+      status: "success",
+      message: "Group is no longer active",
+      data: null,
+    });
+  }
+);
 
 export default {
   createGroup,
   addUserToGroup,
   removeUserFromGroup,
   getAllGroups,
+  archiveGroup,
 };
