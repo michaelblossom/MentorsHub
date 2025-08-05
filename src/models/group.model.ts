@@ -23,7 +23,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
     ],
     archive: {
       type: Boolean,
-      default: true,
+      default: false,
       select: false,
     },
   },

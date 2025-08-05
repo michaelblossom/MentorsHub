@@ -182,24 +182,24 @@ const login = catchAsync(
     //   // 2)check if user exist and password is correct
     const user = await User.findOne({ email: email })
       .select("+password")
-      .populate("groups");
+      .populate("group");
     if (!user || !(await user.correctPassword(password, user.password))) {
       return next(new AppError('incorrect email or password', 401));
     }
     //destructuring the user
-    // const {
-    //   passwordResetOTP,
-    //   passwordResetOTPExpires,
-    //   otpExpires,
-    //   createdAt,
-    //   updatedAt,
-    //   __v,
-    //   ...rest
-    // } = user;
+    const {
+      passwordResetOTP,
+      passwordResetOTPExpires,
+      otpExpires,
+      createdAt,
+      updatedAt,
+      __v,
+      ...rest
+    } = user.toObject();
 
     //   3)if everything is correct send token
     //calling createAndSendToken function
-    createAndSendToken(user, 200, res, "You have successfully loggedin");
+    createAndSendToken(rest, 200, res, "You have successfully loggedin");
   }
 );
 
