@@ -65,6 +65,33 @@ const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
     });
   }
 };
+// get single user
+const getUser = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return next(new AppError("No user found ", 404));
+    }
+    // destructuring the user
+    const {
+      passwordResetOTP,
+      passwordResetOTPExpires,
+      otp,
+      otpExpires,
+      createdAt,
+      updatedAt,
+      __v,
+      ...rest
+    } = user.toObject();
+    res.status(200).json({
+      status: "success",
+      data: {
+        user: rest,
+      },
+    });
+  }
+);
+
 const getUserStats = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const stats = await User.aggregate([
@@ -92,10 +119,10 @@ const getUserStats = catchAsync(
     res.status(200).json({
       status: "success",
 
-      message: stats,
+      //   message: stats,
       data: stats[0] || { totalUsers: 0, unverifiedUsers: 0 },
     });
   }
 );
 
-export default { getAllUsers, getUserStats };
+export default { getAllUsers, getUser, getUserStats };
