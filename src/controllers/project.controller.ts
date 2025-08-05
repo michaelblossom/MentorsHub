@@ -47,6 +47,7 @@ const getAllProjects = catchAsync(
     });
   }
 );
+
 const createProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;

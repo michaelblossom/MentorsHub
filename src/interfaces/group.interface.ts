@@ -3,5 +3,5 @@ export interface IGroup {
   users?: string[];
   supervisor?: any;
   archive?: boolean;
-  maximunGroupSize: number;
+  maximumGroupSize: number;
 }

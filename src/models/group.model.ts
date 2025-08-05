@@ -1,25 +1,24 @@
-import mongoose from "mongoose";
-import { IGroup } from "../interfaces/group.interface";
+import { IGroup } from '../interfaces/group.interface';
+import mongoose from 'mongoose';
 
 const groupSchema = new mongoose.Schema<IGroup>(
   {
     name: {
       type: String,
-      required: [true, "please provide group name "],
+      required: [true, 'please provide group name '],
     },
     supervisor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: [true, "Group must have a supervisor."],
+      ref: 'User',
     },
     maximumGroupSize: {
       type: Number,
-      required: [true, "A group must have a group size"],
+      required: [true, 'A group must have a group size'],
     },
     users: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
       },
     ],
     archive: {
@@ -47,6 +46,6 @@ groupSchema.pre(/^find/, function (next) {
 //   });
 //   next();
 // });
-const Group = mongoose.model("Group", groupSchema);
+const Group = mongoose.model('Group', groupSchema);
 
 export default Group;
