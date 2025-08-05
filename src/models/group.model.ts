@@ -6,6 +6,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
     name: {
       type: String,
       required: [true, 'please provide group name '],
+      unique: true,
     },
     supervisor: {
       type: mongoose.Schema.Types.ObjectId,
