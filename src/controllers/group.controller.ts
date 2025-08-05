@@ -60,7 +60,6 @@ const createGroup = catchAsync(
       maximunGroupSize: req.body.maximunGroupSize,
     };
     const user = await User.findById(id);
-    // console.log(user);
     if (user?.role !== "admin") {
       return next(
         new AppError("you do not have permission to perforn this action", 403)
@@ -82,7 +81,6 @@ const createGroup = catchAsync(
       );
     }
 
-    // console.log(supervisor);
     try {
       await sendEmail({
         email: supervisor.email,
@@ -196,6 +194,7 @@ const addUserToGroup = catchAsync(
     }
   }
 );
+
 const removeUserFromGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     //getting the id of the currently logged in use
@@ -235,7 +234,6 @@ const removeUserFromGroup = catchAsync(
     const userIndex = group.users.findIndex(
       (id: any) => id.toString() === user._id.toString()
     );
-    // console.log(userIndex);
 
     if (userIndex === -1) {
       return next(
@@ -302,10 +300,47 @@ const archiveGroup = catchAsync(
   }
 );
 
+const getGroupStats = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const stats = await Group.aggregate([
+      {
+        // $facet will enable us to run multiple pipelines at a time( the pipelines are totalGrous,archivedGroups)
+        $facet: {
+          //count the number of elements in Groups model and store the value in count variable
+          totalGroups: [{ $count: "count" }],
+          //count the number of elements in Groups model whose archive field value is true and store the value in count variable
+
+          archivedGroups: [
+            { $match: { archive: { $ne: false } } },
+            { $count: "count" },
+          ],
+        },
+      },
+      {
+        $project: {
+          totalGroups: {
+            // $arrayElemAt allows us to the value of an array in a specified index
+            $ifNull: [{ $arrayElemAt: ["$totalGroups.count", 0] }, 0], // $ifNull allow us to set a value if the expected value is null
+          },
+          archivedGroups: {
+            $ifNull: [{ $arrayElemAt: ["$archivedGroups.count", 0] }, 0],
+          },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      status: "success",
+      data: stats[0] || { totalGroups: 0, archivedGroups: 0 },
+    });
+  }
+);
+
 export default {
   createGroup,
   addUserToGroup,
   removeUserFromGroup,
   getAllGroups,
   archiveGroup,
+  getGroupStats,
 };

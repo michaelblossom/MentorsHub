@@ -16,5 +16,6 @@ router.post("/reset-password", authController.resetPassword);
 router.patch("/updateMyPassword", authController.updatePassword);
 
 router.get("/", userController.getAllUsers);
+router.get("/get-user-stats", userController.getUserStats);
 
 export default router;

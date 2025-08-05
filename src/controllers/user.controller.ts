@@ -65,5 +65,37 @@ const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
     });
   }
 };
+const getUserStats = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const stats = await User.aggregate([
+      {
+        // $facet will enable us to run multiple pipelines at a time( the pipelines are totalUsers,unverifiedUsers)
+        $facet: {
+          //count the number of elements in Users model and store the value in count variable
+          totalUsers: [{ $count: "count" }],
+          //count the number of elements in Users model whose isVarified field value is false and store the value in count variable
+          unverifiedUsers: [
+            { $match: { isVerified: false } },
+            { $count: "count" },
+          ],
+        },
+      },
+      {
+        $project: {
+          // $arrayElemAt allows us to the value of an array in a specified index
+          totalUsers: { $arrayElemAt: ["$totalUsers.count", 0] },
+          unverifiedUsers: { $arrayElemAt: ["$unverifiedUsers.count", 0] },
+        },
+      },
+    ]);
 
-export default { getAllUsers };
+    res.status(200).json({
+      status: "success",
+
+      message: stats,
+      data: stats[0] || { totalUsers: 0, unverifiedUsers: 0 },
+    });
+  }
+);
+
+export default { getAllUsers, getUserStats };

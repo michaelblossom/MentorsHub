@@ -13,4 +13,6 @@ router.post(
 );
 router.patch("/archive-group/:id", Protected, groupController.archiveGroup);
 
+router.get("/get-group-stats", groupController.getGroupStats);
+
 export default router;
