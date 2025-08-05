@@ -12,5 +12,6 @@ router.patch(
   uploadDocumentsControllers.uploadUserDocument,
   projectController.updateProject
 );
+router.get("/:id", projectController.getProject);
 
 export default router;

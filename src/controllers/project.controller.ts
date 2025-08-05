@@ -12,7 +12,7 @@ import sendEmail from "../utils/email";
 // functions that will filter out fields tha we dont want to update
 const filterObj = (obj: any, ...allowedFields: string[]) => {
   const newObj: { [key: string]: any } = {};
-  Object.keys(obj).forEach(el => {
+  Object.keys(obj).forEach((el) => {
     if (allowedFields.includes(el)) {
       newObj[el] = obj[el];
     }
@@ -48,6 +48,32 @@ const getAllProjects = catchAsync(
   }
 );
 
+// get single project
+const getProject = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const project = await Project.findById(req.params.id)
+      .populate({
+        path: "userId",
+        select:
+          "-__v -passwo -rdResetOTP -passwordResetOTPExpires -otp -otpExpires -createdAt -updatedAt",
+      })
+      .populate({
+        path: "groupId",
+        select: "-__v -createdAt -updatedAt",
+      });
+    if (!project) {
+      return next(new AppError("No project found ", 404));
+    }
+    // destructuring the project
+    const { createdAt, updatedAt, __v, ...rest } = project.toObject();
+    res.status(200).json({
+      status: "success",
+      data: {
+        project: rest,
+      },
+    });
+  }
+);
 const createProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
@@ -141,25 +167,25 @@ const updateProject = catchAsync(
     const project = await Project.findById(req.params.id);
     //check if project exist
     if (!project) {
-      return new AppError('No Project found', 400);
+      return new AppError("No Project found", 400);
     }
     if (project.userId.toString() !== (req as any).user.id) {
       return next(
-        new AppError('You do not have permission to update this project', 403)
+        new AppError("You do not have permission to update this project", 403)
       );
     }
 
     if (req.body.status) {
       return next(
         new AppError(
-          'this route is not for status  update please use  updateMyProject route',
+          "this route is not for status  update please use  updateMyProject route",
           400
         )
       );
     }
 
     // 2)filtering out the unwanted field names that are not allowed to be updated by calling the filterObj function and storing it in filteredBody
-    const filteredBody = filterObj(req.body, 'file', 'topic', 'stage');
+    const filteredBody = filterObj(req.body, "file", "topic", "stage");
     if (req.file) filteredBody.file = req.file.filename; //saving the name of the newly updated file to file filed
     // 3)update the project document
     const updatedProject = await Project.findByIdAndUpdate(
@@ -171,7 +197,7 @@ const updateProject = catchAsync(
       }
     );
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
         project: updatedProject,
       },
@@ -181,5 +207,6 @@ const updateProject = catchAsync(
 export default {
   createProject,
   getAllProjects,
+  getProject,
   updateProject,
 };
