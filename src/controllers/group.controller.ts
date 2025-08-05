@@ -1,12 +1,13 @@
-import mongoose from 'mongoose';
-import { Request, Response, NextFunction } from 'express';
-import catchAsync from '../utils/catchAsync';
+import { NextFunction, Request, Response } from 'express';
+
 import AppError from '../utils/appError';
-import { IGroup } from '../interfaces/group.interface';
 import Group from '../models/group.model';
+import { IGroup } from '../interfaces/group.interface';
 import User from '../models/user.model';
-import sendEmail from '../utils/email';
+import catchAsync from '../utils/catchAsync';
+import mongoose from 'mongoose';
 import { runInNewContext } from 'vm';
+import sendEmail from '../utils/email';
 
 // get All groups
 const getAllGroups = catchAsync(
@@ -17,10 +18,9 @@ const getAllGroups = catchAsync(
     if (!user) {
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
-    console.log(user);
-    if (user?.role !== "admin") {
+    if (user?.role !== 'admin') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     const groups = await Group.find();
@@ -41,12 +41,12 @@ const createGroup = catchAsync(
     const id = (req as any).user.id;
     // const mentorId = req.body.supervisor;
 
-    const { name, mentorId, maximunGroupSize } = req.body;
+    const { name, maximumGroupSize } = req.body;
 
     // checking if the ObjectId provided is valid
-    if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-      return next(new AppError(`Invalid supervisor ID`, 400));
-    }
+    // if (!mongoose.Types.ObjectId.isValid(mentorId)) {
+    //   return next(new AppError(`Invalid supervisor ID`, 400));
+    // }
 
     const exists = await Group.findOne({ name });
 
@@ -56,9 +56,10 @@ const createGroup = catchAsync(
 
     const group: Partial<IGroup> = {
       name,
-      supervisor: req.body.supervisor,
-      maximunGroupSize: req.body.maximunGroupSize,
+      maximumGroupSize,
     };
+
+    console.log({ group });
     const user = await User.findById(id);
     if (user?.role !== 'admin') {
       return next(
@@ -70,38 +71,37 @@ const createGroup = catchAsync(
     if (!newGroup) {
       return next(new AppError(`Error creating Group! Please try again`, 400));
     }
-    const supervisor = await User.findById(mentorId);
 
-    if (!supervisor) {
-      return next(
-        new AppError(
-          `No supervisor found with this name:${supervisor.name}`,
-          400
-        )
-      );
-    }
+    // if (!supervisor) {
+    //   return next(
+    //     new AppError(
+    //       `No supervisor found with this name:${supervisor.name}`,
+    //       400
+    //     )
+    //   );
+    // }
 
-    try {
-      await sendEmail({
-        email: supervisor.email,
-        subject: 'Group Mentorship Notification',
-        html: `<h1> Hi ${supervisor.firstName} ${supervisor.lastName}, you have been assigned to Mentor: ${newGroup.name}<h1>`,
-      });
-      // sending response
-      res.status(201).json({
-        status: 'success',
-        message: 'Group was successfully Created',
+    // try {
+    //   await sendEmail({
+    //     email: supervisor.email,
+    //     subject: 'Group Mentorship Notification',
+    //     html: `<h1> Hi ${supervisor.firstName} ${supervisor.lastName}, you have been assigned to Mentor: ${newGroup.name}<h1>`,
+    //   });
+    //   // sending response
+    //   res.status(201).json({
+    //     status: 'success',
+    //     message: 'Group was successfully Created',
 
-        data: {
-          group: newGroup,
-        },
-      });
-    } catch (error) {
-      await Group.findByIdAndDelete(newGroup.id);
-      return next(
-        new AppError('There is an error in sending the mail. Try again', 500)
-      );
-    }
+    //     data: {
+    //       group: newGroup,
+    //     },
+    //   });
+    // } catch (error) {
+    //   await Group.findByIdAndDelete(newGroup.id);
+    //   return next(
+    //     new AppError('There is an error in sending the mail. Try again', 500)
+    //   );
+    // }
   }
 );
 
@@ -136,10 +136,12 @@ const addUserToGroup = catchAsync(
     const user = await User.findById(userId);
     if (!user) {
       return next(new AppError(`No user found with this ID:${userId}`, 400));
-    } else if (user.role !== 'student') {
+    }
+
+    if (user.role === 'admin') {
       return next(
         new AppError(
-          `It's Only mentees(students) that can be added to :${group.name}`,
+          `Only students and supervisors that can be added to :${group.name}`,
           400
         )
       );
@@ -176,7 +178,7 @@ const addUserToGroup = catchAsync(
       // sending response
       res.status(201).json({
         status: 'success',
-        message: 'User successfully removed from group',
+        message: 'User successfully added from group',
         data: {
           group: group,
         },
@@ -286,15 +288,15 @@ const archiveGroup = catchAsync(
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
     console.log(user);
-    if (user?.role !== "admin") {
+    if (user?.role !== 'admin') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     await Group.findByIdAndUpdate(req.params.id, { archive: false });
     res.status(204).json({
-      status: "success",
-      message: "Group is no longer active",
+      status: 'success',
+      message: 'Group is no longer active',
       data: null,
     });
   }

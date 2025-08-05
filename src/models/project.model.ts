@@ -1,13 +1,13 @@
-import mongoose from "mongoose";
 import { IProject } from "../interfaces/project.interface";
+import mongoose from "mongoose";
 
 const projectSchema = new mongoose.Schema<IProject>(
   {
-    name: {
+    topic: {
       type: String,
       required: [true, "please provide project name "],
     },
-    topic: {
+    description: {
       type: String,
       required: [true, "please provide project name "],
     },
