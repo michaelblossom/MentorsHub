@@ -1,13 +1,13 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response } from 'express';
 
-import AppError from "../utils/appError";
-import Group from "../models/group.model";
-import { IGroup } from "../interfaces/group.interface";
-import User from "../models/user.model";
-import catchAsync from "../utils/catchAsync";
-import mongoose from "mongoose";
-import { runInNewContext } from "vm";
-import sendEmail from "../utils/email";
+import AppError from '../utils/appError';
+import Group from '../models/group.model';
+import { IGroup } from '../interfaces/group.interface';
+import User from '../models/user.model';
+import catchAsync from '../utils/catchAsync';
+import mongoose from 'mongoose';
+import { runInNewContext } from 'vm';
+import sendEmail from '../utils/email';
 
 // get All groups
 const getAllGroups = catchAsync(
@@ -15,20 +15,19 @@ const getAllGroups = catchAsync(
     const id = (req as any).user.id;
     // check if the user fetching all the projects is an admin
     const user = await User.findById(id);
+
     if (!user) {
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
-    if (user?.role !== "admin") {
+    if (user?.role !== 'admin') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     const groups = await Group.find();
-
     res.status(200).json({
       status: 'success',
       result: groups.length,
-
       data: {
         groups: groups,
       },
@@ -195,7 +194,7 @@ const addUserToGroup = catchAsync(
       return next(new AppError(`No user found with this ID:${userId}`, 400));
     }
 
-    if (user.role === "admin") {
+    if (user.role === 'admin') {
       return next(
         new AppError(
           `Only students and supervisors that can be added to :${group.name}`,
@@ -234,8 +233,8 @@ const addUserToGroup = catchAsync(
       });
       // sending response
       res.status(201).json({
-        status: "success",
-        message: "User successfully added from group",
+        status: 'success',
+        message: 'User successfully added from group',
         data: {
           group: group,
         },
@@ -345,15 +344,15 @@ const archiveGroup = catchAsync(
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
     console.log(user);
-    if (user?.role !== "admin") {
+    if (user?.role !== 'admin') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     await Group.findByIdAndUpdate(req.params.id, { archive: false });
     res.status(204).json({
-      status: "success",
-      message: "Group is no longer active",
+      status: 'success',
+      message: 'Group is no longer active',
       data: null,
     });
   }
@@ -361,17 +360,17 @@ const archiveGroup = catchAsync(
 const getGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const group = await Group.findById(req.params.id).populate({
-      path: "users",
+      path: 'users',
       select:
-        "-__v -passwo -rdResetOTP -passwordResetOTPExpires -passwordResetOTP -otp -otpExpires -createdAt -updatedAt",
+        '-__v -passwo -rdResetOTP -passwordResetOTPExpires -passwordResetOTP -otp -otpExpires -createdAt -updatedAt',
     });
     if (!group) {
-      return next(new AppError("No group found ", 404));
+      return next(new AppError('No group found ', 404));
     }
     // destructuring the group
     const { createdAt, updatedAt, __v, ...rest } = group.toObject();
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         group: rest,
       },

@@ -34,7 +34,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
 
 // this query will help us to only get the user that are not deleted(active:true)
 groupSchema.pre(/^find/, function (next) {
-  (this as any).find({ archive: { $ne: false } });
+  (this as any).find({ archive: { $ne: true } });
   next();
 });
 // groupSchema.pre(/^find/, function (next) {
