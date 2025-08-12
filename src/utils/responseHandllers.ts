@@ -13,3 +13,14 @@ export const successResponse = (
     data,
   });
 };
+
+export const errorResponse = (
+  res: Response,
+  message: string,
+  statusCode = 500
+) => {
+  res.status(statusCode).json({
+    success: false,
+    message,
+  });
+};
