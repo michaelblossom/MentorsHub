@@ -8,6 +8,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
       required: [true, 'please provide group name '],
       unique: true,
     },
+    // TODO: Check if the user being added is a supervisor before adding the user to group
     supervisor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

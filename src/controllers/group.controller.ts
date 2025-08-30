@@ -202,6 +202,45 @@ const addUserToGroup = catchAsync(
         )
       );
     }
+    // Check if user is a supervisor and add them to the group
+    if (user.role === 'supervisor') {
+      if (group.supervisor) {
+        return next(
+          new AppError(`Group already has a supervisor: ${group.name}`, 400)
+        );
+      }
+
+      const addedSupervisor = await Group.findByIdAndUpdate(
+        groupId,
+        { $set: { supervisor: userId } }, // dynamic key update
+        { new: true, runValidators: true }
+      );
+
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Project Group Notification',
+          html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been added to : ${group.name}<h1>`,
+        });
+
+        return res.status(201).json({
+          status: 'success',
+          message: 'Supervisor successfully added to group',
+          data: {
+            group: addedSupervisor,
+          },
+        });
+      } catch (error) {
+        await Group.findByIdAndUpdate(
+          groupId,
+          { $pull: { supervisor: userId } },
+          { new: true }
+        );
+        return next(
+          new AppError('There is an error in sending the mail. Try again', 500)
+        );
+      }
+    }
 
     // Check if user is already in group
     if (group.users.includes(user._id)) {
