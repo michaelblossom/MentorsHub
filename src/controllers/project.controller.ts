@@ -95,9 +95,7 @@ const createProject = catchAsync(
     }
 
     const projectExists = await Project.findOne({ topic });
-    // console.log(`please show list of projects${projectExists}`);
 
-    console.log({ projectExists });
     // check if topic already exist
     if (projectExists?.topic) {
       return next(new AppError(`Project ${topic} already exists`, 400));
@@ -162,51 +160,6 @@ const createProject = catchAsync(
     }
   }
 );
-
-// const createGroup = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const userId = (req as any).user.id;
-
-//     const user = await User.findById(userId);
-//     if (!user || user.role !== 'admin') {
-//       return next(
-//         new AppError('You do not have permission to perform this action', 403)
-//       );
-//     }
-
-//     const { name, maximumGroupSize } = req.body;
-
-//     try {
-//       const newGroup = await Group.create({
-//         name,
-//         maximumGroupSize,
-//       });
-
-//       if (!newGroup) {
-//         return next(
-//           new AppError(`Error creating group! Please try again`, 400)
-//         );
-//       }
-
-//       return res.status(201).json({
-//         status: 'success',
-//         message: 'Group was successfully created',
-//         data: {
-//           group: newGroup,
-//         },
-//       });
-//     } catch (error: any) {
-//       // Handle MongoDB duplicate key error
-//       if (error.code === 11000) {
-//         return next(new AppError(`Group ${name} already exists`, 400));
-//       }
-
-//       return next(
-//         new AppError('An unexpected error occurred. Please try again.', 500)
-//       );
-//     }
-//   }
-// );
 
 const updateProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {

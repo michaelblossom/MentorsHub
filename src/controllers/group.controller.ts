@@ -212,7 +212,7 @@ const addUserToGroup = catchAsync(
 
       const addedSupervisor = await Group.findByIdAndUpdate(
         groupId,
-        { $set: { supervisor: userId } }, // dynamic key update
+        { $set: { supervisor: userId } },
         { new: true, runValidators: true }
       );
 
