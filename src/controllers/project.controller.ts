@@ -55,7 +55,7 @@ const getProject = catchAsync(
       .populate({
         path: 'userId',
         select:
-          '-__v -passwo -rdResetOTP -passwordResetOTPExpires -otp -otpExpires -createdAt -updatedAt',
+          '-__v -passwordResetOTP -passwordResetOTPExpires -otp -otpExpires -createdAt -updatedAt',
       })
       .populate({
         path: 'groupId',
@@ -74,6 +74,7 @@ const getProject = catchAsync(
     });
   }
 );
+
 const createProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
@@ -84,6 +85,7 @@ const createProject = catchAsync(
     if (!user) {
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
+
     if (user?.role !== 'student') {
       return next(
         new AppError('you do not have permission to perforn this action', 403)
@@ -124,6 +126,7 @@ const createProject = catchAsync(
       userId: id,
       groupId,
     };
+
     const newProject = await Project.create(project);
 
     if (!newProject) {
@@ -131,6 +134,7 @@ const createProject = catchAsync(
         new AppError(`Error creating Project! Please try again`, 400)
       );
     }
+
     //getting the supervisor of the group in which a member wants to create project
     const supervisor = await User.findById(group.supervisor);
 
