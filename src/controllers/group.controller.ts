@@ -1,13 +1,13 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response } from 'express';
 
-import AppError from "../utils/appError";
-import Group from "../models/group.model";
-import { IGroup } from "../interfaces/group.interface";
-import User from "../models/user.model";
-import catchAsync from "../utils/catchAsync";
-import mongoose from "mongoose";
-import { runInNewContext } from "vm";
-import sendEmail from "../utils/email";
+import AppError from '../utils/appError';
+import Group from '../models/group.model';
+import { IGroup } from '../interfaces/group.interface';
+import User from '../models/user.model';
+import catchAsync from '../utils/catchAsync';
+import mongoose from 'mongoose';
+import { runInNewContext } from 'vm';
+import sendEmail from '../utils/email';
 
 // get All groups
 const getAllGroups = catchAsync(
@@ -15,20 +15,19 @@ const getAllGroups = catchAsync(
     const id = (req as any).user.id;
     // check if the user fetching all the projects is an admin
     const user = await User.findById(id);
+
     if (!user) {
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
-    if (user?.role !== "admin") {
+    if (user?.role !== 'admin') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     const groups = await Group.find();
-
     res.status(200).json({
-      status: "success",
+      status: 'success',
       result: groups.length,
-
       data: {
         groups: groups,
       },
@@ -38,70 +37,46 @@ const getAllGroups = catchAsync(
 
 const createGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const id = (req as any).user.id;
-    // const mentorId = req.body.supervisor;
+    const userId = (req as any).user.id;
+
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      return next(
+        new AppError('You do not have permission to perform this action', 403)
+      );
+    }
 
     const { name, maximumGroupSize } = req.body;
 
-    // checking if the ObjectId provided is valid
-    // if (!mongoose.Types.ObjectId.isValid(mentorId)) {
-    //   return next(new AppError(`Invalid supervisor ID`, 400));
-    // }
+    try {
+      const newGroup = await Group.create({
+        name,
+        maximumGroupSize,
+      });
 
-    const exists = await Group.findOne({ name });
+      if (!newGroup) {
+        return next(
+          new AppError(`Error creating group! Please try again`, 400)
+        );
+      }
 
-    if (exists?.name) {
-      return next(new AppError(`Group ${name} already exists`, 400));
-    }
+      return res.status(201).json({
+        status: 'success',
+        message: 'Group was successfully created',
+        data: {
+          group: newGroup,
+        },
+      });
+    } catch (error: any) {
+      // Handle MongoDB duplicate key error
+      if (error.code === 11000) {
+        return next(new AppError(`Group ${name} already exists`, 400));
+      }
 
-    const group: Partial<IGroup> = {
-      name,
-      maximumGroupSize,
-    };
-
-    console.log({ group });
-    const user = await User.findById(id);
-    if (user?.role !== "admin") {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('An unexpected error occurred. Please try again.', 500)
       );
     }
-    const newGroup = await Group.create(group);
-
-    if (!newGroup) {
-      return next(new AppError(`Error creating Group! Please try again`, 400));
-    }
-
-    // if (!supervisor) {
-    //   return next(
-    //     new AppError(
-    //       `No supervisor found with this name:${supervisor.name}`,
-    //       400
-    //     )
-    //   );
-    // }
-
-    // try {
-    //   await sendEmail({
-    //     email: supervisor.email,
-    //     subject: 'Group Mentorship Notification',
-    //     html: `<h1> Hi ${supervisor.firstName} ${supervisor.lastName}, you have been assigned to Mentor: ${newGroup.name}<h1>`,
-    //   });
-    //   // sending response
-    //   res.status(201).json({
-    //     status: 'success',
-    //     message: 'Group was successfully Created',
-
-    //     data: {
-    //       group: newGroup,
-    //     },
-    //   });
-    // } catch (error) {
-    //   await Group.findByIdAndDelete(newGroup.id);
-    //   return next(
-    //     new AppError('There is an error in sending the mail. Try again', 500)
-    //   );
-    // }
   }
 );
 
@@ -111,9 +86,9 @@ const addUserToGroup = catchAsync(
     // Find the current user
     const currentUser = await User.findById(id);
     // check if the current user that want to perform the action is an admin
-    if (currentUser?.role !== "admin") {
+    if (currentUser?.role !== 'admin') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     const { groupId, userId } = req.body;
@@ -138,13 +113,52 @@ const addUserToGroup = catchAsync(
       return next(new AppError(`No user found with this ID:${userId}`, 400));
     }
 
-    if (user.role === "admin") {
+    if (user.role === 'admin') {
       return next(
         new AppError(
           `Only students and supervisors that can be added to :${group.name}`,
           400
         )
       );
+    }
+    // Check if user is a supervisor and add them to the group
+    if (user.role === 'supervisor') {
+      if (group.supervisor) {
+        return next(
+          new AppError(`Group already has a supervisor: ${group.name}`, 400)
+        );
+      }
+
+      const addedSupervisor = await Group.findByIdAndUpdate(
+        groupId,
+        { $set: { supervisor: userId } },
+        { new: true, runValidators: true }
+      );
+
+      try {
+        await sendEmail({
+          email: user.email,
+          subject: 'Project Group Notification',
+          html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been added to : ${group.name}<h1>`,
+        });
+
+        return res.status(201).json({
+          status: 'success',
+          message: 'Supervisor successfully added to group',
+          data: {
+            group: addedSupervisor,
+          },
+        });
+      } catch (error) {
+        await Group.findByIdAndUpdate(
+          groupId,
+          { $pull: { supervisor: userId } },
+          { new: true }
+        );
+        return next(
+          new AppError('There is an error in sending the mail. Try again', 500)
+        );
+      }
     }
 
     // Check if user is already in group
@@ -153,7 +167,7 @@ const addUserToGroup = catchAsync(
     }
 
     // Check if users in the group are up to 3
-    if (group.users.length >= group.maximunGroupSize) {
+    if (group.users.length >= group.maximumGroupSize) {
       return next(
         new AppError(
           `${groupId.name} has reached its maximum number of users:`,
@@ -172,13 +186,13 @@ const addUserToGroup = catchAsync(
     try {
       await sendEmail({
         email: user.email,
-        subject: "Project Group Notification",
+        subject: 'Project Group Notification',
         html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been added to : ${group.name}<h1>`,
       });
       // sending response
       res.status(201).json({
-        status: "success",
-        message: "User successfully added from group",
+        status: 'success',
+        message: 'User successfully added from group',
         data: {
           group: group,
         },
@@ -191,7 +205,7 @@ const addUserToGroup = catchAsync(
         { new: true }
       );
       return next(
-        new AppError("There is an error in sending the mail. Try again", 500)
+        new AppError('There is an error in sending the mail. Try again', 500)
       );
     }
   }
@@ -204,9 +218,9 @@ const removeUserFromGroup = catchAsync(
     // Find the current user
     const currentUser = await User.findById(id);
     // check if the current user that want to perform the action is an admin
-    if (currentUser?.role !== "admin") {
+    if (currentUser?.role !== 'admin') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     //getting the groupId and UserId from the body
@@ -249,13 +263,13 @@ const removeUserFromGroup = catchAsync(
     try {
       await sendEmail({
         email: user.email,
-        subject: "Project Group Notification",
+        subject: 'Project Group Notification',
         html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been removed from : ${group.name}<h1>`,
       });
       // sending response
       res.status(201).json({
-        status: "success",
-        message: "User successfully removed from group",
+        status: 'success',
+        message: 'User successfully removed from group',
         data: {
           group: group,
         },
@@ -268,12 +282,12 @@ const removeUserFromGroup = catchAsync(
         { new: true }
       );
       return next(
-        new AppError("There is an error in sending the mail. Try again", 500)
+        new AppError('There is an error in sending the mail. Try again', 500)
       );
     }
 
     return res.status(200).json({
-      message: "User successfully removed from group",
+      message: 'User successfully removed from group',
       group,
     });
   }
@@ -288,15 +302,15 @@ const archiveGroup = catchAsync(
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
     console.log(user);
-    if (user?.role !== "admin") {
+    if (user?.role !== 'admin') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     await Group.findByIdAndUpdate(req.params.id, { archive: false });
     res.status(204).json({
-      status: "success",
-      message: "Group is no longer active",
+      status: 'success',
+      message: 'Group is no longer active',
       data: null,
     });
   }
@@ -304,17 +318,17 @@ const archiveGroup = catchAsync(
 const getGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const group = await Group.findById(req.params.id).populate({
-      path: "users",
+      path: 'users',
       select:
-        "-__v -passwo -rdResetOTP -passwordResetOTPExpires -passwordResetOTP -otp -otpExpires -createdAt -updatedAt",
+        '-__v -passwo -rdResetOTP -passwordResetOTPExpires -passwordResetOTP -otp -otpExpires -createdAt -updatedAt',
     });
     if (!group) {
-      return next(new AppError("No group found ", 404));
+      return next(new AppError('No group found ', 404));
     }
     // destructuring the group
     const { createdAt, updatedAt, __v, ...rest } = group.toObject();
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         group: rest,
       },
@@ -329,12 +343,12 @@ const getGroupStats = catchAsync(
         // $facet will enable us to run multiple pipelines at a time( the pipelines are totalGrous,archivedGroups)
         $facet: {
           //count the number of elements in Groups model and store the value in count variable
-          totalGroups: [{ $count: "count" }],
+          totalGroups: [{ $count: 'count' }],
           //count the number of elements in Groups model whose archive field value is true and store the value in count variable
 
           archivedGroups: [
             { $match: { archive: { $ne: false } } },
-            { $count: "count" },
+            { $count: 'count' },
           ],
         },
       },
@@ -342,17 +356,17 @@ const getGroupStats = catchAsync(
         $project: {
           totalGroups: {
             // $arrayElemAt allows us to the value of an array in a specified index
-            $ifNull: [{ $arrayElemAt: ["$totalGroups.count", 0] }, 0], // $ifNull allow us to set a value if the expected value is null
+            $ifNull: [{ $arrayElemAt: ['$totalGroups.count', 0] }, 0], // $ifNull allow us to set a value if the expected value is null
           },
           archivedGroups: {
-            $ifNull: [{ $arrayElemAt: ["$archivedGroups.count", 0] }, 0],
+            $ifNull: [{ $arrayElemAt: ['$archivedGroups.count', 0] }, 0],
           },
         },
       },
     ]);
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: stats[0] || { totalGroups: 0, archivedGroups: 0 },
     });
   }
