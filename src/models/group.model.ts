@@ -1,26 +1,26 @@
-import { IGroup } from '../interfaces/group.interface';
-import mongoose from 'mongoose';
+import { IGroup } from "../interfaces/group.interface";
+import mongoose from "mongoose";
 
 const groupSchema = new mongoose.Schema<IGroup>(
   {
     name: {
       type: String,
-      required: [true, 'please provide group name '],
+      required: [true, "please provide group name "],
       unique: true,
     },
     // TODO: Check if the user being added is a supervisor before adding the user to group
     supervisor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     maximumGroupSize: {
       type: Number,
-      required: [true, 'A group must have a group size'],
+      required: [true, "A group must have a maximumGroupSize size"],
     },
     users: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
       },
     ],
     archive: {
@@ -38,16 +38,16 @@ groupSchema.pre(/^find/, function (next) {
   (this as any).find({ archive: { $ne: true } });
   next();
 });
-// groupSchema.pre(/^find/, function (next) {
-//   this.populate({
-//     path: "supervisor",
-//     select: "firstName lastName email role",
-//   }).populate({
-//     path: "users",
-//     select: "firstName lastName email role",
-//   });
-//   next();
-// });
-const Group = mongoose.model('Group', groupSchema);
+groupSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "supervisor",
+    select: "firstName lastName email role",
+  }).populate({
+    path: "users",
+    select: "firstName lastName email role",
+  });
+  next();
+});
+const Group = mongoose.model("Group", groupSchema);
 
 export default Group;
