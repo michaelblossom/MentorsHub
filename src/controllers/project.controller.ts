@@ -1,18 +1,18 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response } from 'express';
 
-import AppError from "../utils/appError";
-import Group from "../models/group.model";
-import { IProject } from "../interfaces/project.interface";
-import Project from "../models/project.model";
-import User from "../models/user.model";
-import catchAsync from "../utils/catchAsync";
-import mongoose from "mongoose";
-import sendEmail from "../utils/email";
+import AppError from '../utils/appError';
+import Group from '../models/group.model';
+import { IProject } from '../interfaces/project.interface';
+import Project from '../models/project.model';
+import User from '../models/user.model';
+import catchAsync from '../utils/catchAsync';
+import mongoose from 'mongoose';
+import sendEmail from '../utils/email';
 
 // functions that will filter out fields tha we dont want to update
 const filterObj = (obj: any, ...allowedFields: string[]) => {
   const newObj: { [key: string]: any } = {};
-  Object.keys(obj).forEach((el) => {
+  Object.keys(obj).forEach(el => {
     if (allowedFields.includes(el)) {
       newObj[el] = obj[el];
     }
@@ -30,15 +30,15 @@ const getAllProjects = catchAsync(
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
     console.log(user);
-    if (user?.role !== "supervisor") {
+    if (user?.role !== 'supervisor') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     const projects = await Project.find();
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       result: projects.length,
 
       data: {
@@ -53,27 +53,28 @@ const getProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const project = await Project.findById(req.params.id)
       .populate({
-        path: "userId",
+        path: 'userId',
         select:
-          "-__v -passwo -rdResetOTP -passwordResetOTPExpires -otp -otpExpires -createdAt -updatedAt",
+          '-__v -passwordResetOTP -passwordResetOTPExpires -otp -otpExpires -createdAt -updatedAt',
       })
       .populate({
-        path: "groupId",
-        select: "-__v -createdAt -updatedAt",
+        path: 'groupId',
+        select: '-__v -createdAt -updatedAt',
       });
     if (!project) {
-      return next(new AppError("No project found ", 404));
+      return next(new AppError('No project found ', 404));
     }
     // destructuring the project
     const { createdAt, updatedAt, __v, ...rest } = project.toObject();
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         project: rest,
       },
     });
   }
 );
+
 const createProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = (req as any).user.id;
@@ -84,9 +85,10 @@ const createProject = catchAsync(
     if (!user) {
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
-    if (user?.role !== "student") {
+
+    if (user?.role !== 'student') {
       return next(
-        new AppError("you do not have permission to perforn this action", 403)
+        new AppError('you do not have permission to perforn this action', 403)
       );
     }
     // checking if the ObjectId provided is valid
@@ -95,7 +97,6 @@ const createProject = catchAsync(
     }
 
     const projectExists = await Project.findOne({ topic });
-    // console.log(`please show list of projects${projectExists}`);
 
     // check if topic already exist
     if (projectExists?.topic) {
@@ -125,6 +126,7 @@ const createProject = catchAsync(
       userId: id,
       groupId,
     };
+
     const newProject = await Project.create(project);
 
     if (!newProject) {
@@ -132,6 +134,7 @@ const createProject = catchAsync(
         new AppError(`Error creating Project! Please try again`, 400)
       );
     }
+
     //getting the supervisor of the group in which a member wants to create project
     const supervisor = await User.findById(group.supervisor);
 
@@ -142,13 +145,13 @@ const createProject = catchAsync(
     try {
       await sendEmail({
         email: supervisor.email,
-        subject: "Project Submission Notification",
+        subject: 'Project Submission Notification',
         html: `<h1> Hi Mr ${supervisor.firstName} ${supervisor.lastName}, ${user.firstName} ${user.lastName} from ${group.name} just submitted a project with the topic: "${newProject.topic}"  please review for approval<h1>`,
       });
       // sending response
       res.status(201).json({
-        status: "success",
-        message: "Project was successfully Submitted",
+        status: 'success',
+        message: 'Project was successfully Submitted',
         data: {
           group: newProject,
         },
@@ -156,7 +159,7 @@ const createProject = catchAsync(
     } catch (error) {
       await Project.findByIdAndDelete(newProject.id);
       return next(
-        new AppError("There is an error in sending the mail. Try again", 500)
+        new AppError('There is an error in sending the mail. Try again', 500)
       );
     }
   }
@@ -167,25 +170,25 @@ const updateProject = catchAsync(
     const project = await Project.findById(req.params.id);
     //check if project exist
     if (!project) {
-      return new AppError("No Project found", 400);
+      return new AppError('No Project found', 400);
     }
     if (project.userId.toString() !== (req as any).user.id) {
       return next(
-        new AppError("You do not have permission to update this project", 403)
+        new AppError('You do not have permission to update this project', 403)
       );
     }
 
     if (req.body.status) {
       return next(
         new AppError(
-          "this route is not for status  update please use  updateMyProject route",
+          'this route is not for status  update please use  updateMyProject route',
           400
         )
       );
     }
 
     // 2)filtering out the unwanted field names that are not allowed to be updated by calling the filterObj function and storing it in filteredBody
-    const filteredBody = filterObj(req.body, "file", "topic", "stage");
+    const filteredBody = filterObj(req.body, 'file', 'topic', 'stage');
     if (req.file) filteredBody.file = req.file.filename; //saving the name of the newly updated file to file filed
     // 3)update the project document
     const updatedProject = await Project.findByIdAndUpdate(
@@ -197,7 +200,7 @@ const updateProject = catchAsync(
       }
     );
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         project: updatedProject,
       },

@@ -4,13 +4,13 @@ import dotenv from 'dotenv';
 import app from './app';
 dotenv.config({ path: './config.env' });
 
-const DB = process.env.DATABASE!.replace(
+const DB = process.env?.DATABASE?.replace(
   '<password>',
   process.env.DATABASE_PASSWORD!
 );
 
 mongoose
-  .connect(DB, {
+  .connect(DB!, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   } as ConnectOptions)

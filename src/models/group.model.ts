@@ -6,7 +6,9 @@ const groupSchema = new mongoose.Schema<IGroup>(
     name: {
       type: String,
       required: [true, 'please provide group name '],
+      unique: true,
     },
+    // TODO: Check if the user being added is a supervisor before adding the user to group
     supervisor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -33,7 +35,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
 
 // this query will help us to only get the user that are not deleted(active:true)
 groupSchema.pre(/^find/, function (next) {
-  (this as any).find({ archive: { $ne: false } });
+  (this as any).find({ archive: { $ne: true } });
   next();
 });
 // groupSchema.pre(/^find/, function (next) {
