@@ -15,7 +15,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
     },
     maximumGroupSize: {
       type: Number,
-      required: [true, "A group must have a maximumGroupSize size"],
+      required: [true, "A group must have a maximum size size"],
     },
     users: [
       {
@@ -41,10 +41,10 @@ groupSchema.pre(/^find/, function (next) {
 groupSchema.pre(/^find/, function (next) {
   this.populate({
     path: "supervisor",
-    select: "firstName lastName email role",
+    select: "firstName lastName email role department  phoneNumber",
   }).populate({
     path: "users",
-    select: "firstName lastName email role",
+    select: "firstName lastName email role department matricNumber phoneNumber",
   });
   next();
 });
