@@ -12,6 +12,7 @@ router.patch(
   uploadDocumentsControllers.uploadUserDocument,
   projectController.updateProject
 );
+router.get("/detail", Protected, projectController.getProjectByUser);
 router.get("/:id", projectController.getProject);
 
 export default router;
