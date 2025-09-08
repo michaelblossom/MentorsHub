@@ -14,5 +14,6 @@ router.patch(
 );
 router.get("/detail", Protected, projectController.getProjectByUser);
 router.get("/:id", projectController.getProject);
+router.get("/project-in-group/:groupId", projectController.getProjectByGroup);
 
 export default router;
