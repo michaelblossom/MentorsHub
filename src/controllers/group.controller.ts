@@ -171,7 +171,7 @@ const addUserToGroup = catchAsync(
     if (group.users.length >= group.maximumGroupSize) {
       return next(
         new AppError(
-          `${groupId.name} has reached its maximum number of users:`,
+          `${groupId.name} has reached it's maximum number of users:`,
           400
         )
       );
