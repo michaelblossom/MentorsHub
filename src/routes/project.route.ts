@@ -13,7 +13,7 @@ router.patch(
   projectController.updateProject
 );
 router.get("/detail", Protected, projectController.getProjectByUser);
-router.get("/:id", projectController.getProject);
+router.get("/:id", Protected, projectController.getProject);
 router.get("/project-in-group/:groupId", projectController.getProjectByGroup);
 
 export default router;
