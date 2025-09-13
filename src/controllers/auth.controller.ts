@@ -85,7 +85,7 @@ const signup = catchAsync(
           created, // TODO: we need to find out why this doesnt work when certain values are destrcutured
           201,
           res,
-          "You have registered successfully"
+          "You have successfully registered "
         );
       } catch (error) {
         await User.findByIdAndDelete(created.id);
