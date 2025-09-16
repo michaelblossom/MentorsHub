@@ -4,19 +4,21 @@ import Protected from "../middlewares/auth.middleware";
 import uploadDocumentsControllers from "../controllers/uploadDocuments.controllers";
 const router = express.Router();
 
-router.post("/", Protected, projectController.createProject);
-router.get("/", Protected, projectController.getAllProjects);
+router.use(Protected); // this will protect all the middlewares under it from users that are not logged in
+
+router.post("/", projectController.createProject);
+router.get("/", projectController.getAllProjects);
 router.patch(
   "/:id",
-  Protected,
+
   uploadDocumentsControllers.uploadUserDocument,
   projectController.updateProject
 );
-router.get("/detail", Protected, projectController.getProjectByUser);
-router.get("/:id", Protected, projectController.getProject);
+router.get("/detail", projectController.getProjectByUser);
+router.get("/:id", projectController.getProject);
 router.get(
   "/project-in-group/:groupId",
-  Protected,
+
   projectController.getProjectByGroup
 );
 
