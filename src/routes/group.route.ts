@@ -3,15 +3,17 @@ import groupController from "./../controllers/group.controller";
 import Protected from "../middlewares/auth.middleware";
 const router = express.Router();
 
-router.post("/", Protected, groupController.createGroup);
-router.get("/", Protected, groupController.getAllGroups);
-router.post("/add-to-group", Protected, groupController.addUserToGroup);
+router.use(Protected);
+
+router.post("/", groupController.createGroup);
+router.get("/", groupController.getAllGroups);
+router.post("/add-to-group", groupController.addUserToGroup);
 router.post(
   "/remove-from-group",
-  Protected,
+
   groupController.removeUserFromGroup
 );
-router.patch("/archive-group/:id", Protected, groupController.archiveGroup);
+router.patch("/archive-group/:id", groupController.archiveGroup);
 
 router.get("/:id", groupController.getGroup);
 
