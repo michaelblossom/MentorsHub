@@ -7,6 +7,7 @@ import { Error } from "./types/index";
 import authRouter from "./routes/auth.routes";
 import groupRouter from "./routes/group.route";
 import projectRouter from "./routes/project.route";
+import reviewRouter from "./routes/review.route";
 
 import cookieParser from "cookie-parser";
 
