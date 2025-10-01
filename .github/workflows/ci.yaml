@@ -1,4 +1,4 @@
-name: uptick-talent-lms-frontend-ci
+name: mentorhub-ci
 
 on:
   pull_request: # only run on PRs
