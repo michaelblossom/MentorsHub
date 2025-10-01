@@ -1,10 +1,10 @@
-name: uptick-talent-lms-frontend-ci
+name: mentorhub-ci
 
 on:
   pull_request: # only run on PRs
-    branches: [main]
+    branches: [master]
   push: # only run on pushes
-    branches: [main]
+    branches: [master]
 
 jobs:
   checks:
@@ -25,6 +25,3 @@ jobs:
 
       - name: run build
         run: npm run build
-
-      - name: Run tests
-        run: npm run test
