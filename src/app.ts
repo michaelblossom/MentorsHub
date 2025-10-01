@@ -7,18 +7,29 @@ import { Error } from "./types/index";
 import authRouter from "./routes/auth.routes";
 import groupRouter from "./routes/group.route";
 import projectRouter from "./routes/project.route";
+import reviewRouter from "./routes/review.route";
 
 import cookieParser from "cookie-parser";
 
 import morgan from "morgan";
+const rateLimit = require("express-rate-limit"); //npm package that prevents multiple request from one Ip-address
 
 const app = express();
 
 // Global MIDDLEWARES'
-// global middleware
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
+
+// ratelimiter for regulating request from same ip
+const limiter = rateLimit({
+  max: 200,
+  windowMs: 60 * 60 * 1000,
+  message: "Too many request from this Ip, please try again in an hour time",
+});
+
+// making the limitter to work in all api starting with  /api (Limiter is a middle so we can apply app.use on it)
+app.use("/api", limiter);
 
 // body parser
 app.use(express.json({ limit: "10kb" }));

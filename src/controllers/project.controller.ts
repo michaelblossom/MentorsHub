@@ -230,10 +230,29 @@ const getProjectByUser = catchAsync(
     });
   }
 );
+
+const getProjectByGroup = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.groupId;
+    const project = await Project.findOne({ groupId: id });
+    if (!project) {
+      return next(new AppError("No project found ", 404));
+    }
+    // destructuring the project
+    // const { createdAt, updatedAt, __v, ...rest } = project.toObject();
+    res.status(200).json({
+      status: "success",
+      data: {
+        project,
+      },
+    });
+  }
+);
 export default {
   createProject,
   getAllProjects,
   getProject,
   updateProject,
   getProjectByUser,
+  getProjectByGroup,
 };
