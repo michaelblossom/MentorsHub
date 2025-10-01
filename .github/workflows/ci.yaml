@@ -2,9 +2,9 @@ name: mentorhub-ci
 
 on:
   pull_request: # only run on PRs
-    branches: [main]
+    branches: [master]
   push: # only run on pushes
-    branches: [main]
+    branches: [master]
 
 jobs:
   checks:
