@@ -14,18 +14,17 @@ router.post(
 
   groupController.removeUserFromGroup
 );
+router.get(
+  "/get-group-stats",
+  restrict("admin"),
+  groupController.getGroupStats
+);
 router.patch(
   "/archive-group/:id",
   restrict("admin"),
   groupController.archiveGroup
 );
 
-router.get("/:id", groupController.getGroup);
-
-router.get(
-  "/get-group-stats",
-  restrict("admin"),
-  groupController.getGroupStats
-);
+router.get("/:id", restrict("admin"), groupController.getGroup);
 
 export default router;

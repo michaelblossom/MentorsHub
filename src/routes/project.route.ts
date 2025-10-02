@@ -12,11 +12,12 @@ router.post("/", restrict("student"), projectController.createProject);
 router.get("/", projectController.getAllProjects);
 router.patch(
   "/:id",
+  restrict("student"),
 
   uploadDocumentsControllers.uploadUserDocument,
   projectController.updateProject
 );
-router.get("/detail", projectController.getProjectByUser);
+router.get("/detail", restrict("student"), projectController.getProjectByUser);
 router.get("/:id", projectController.getProject);
 router.get(
   "/project-in-group/:groupId",
