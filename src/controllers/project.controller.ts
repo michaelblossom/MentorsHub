@@ -91,11 +91,11 @@ const createProject = catchAsync(
       return next(new AppError(`No user found with this ID:${id}`, 400));
     }
 
-    if (user?.role !== "student") {
-      return next(
-        new AppError("you do not have permission to perforn this action", 403)
-      );
-    }
+    // if (user?.role !== "student") {
+    //   return next(
+    //     new AppError("you do not have permission to perforn this action", 403)
+    //   );
+    // }
     // checking if the ObjectId provided is valid
     if (!mongoose.Types.ObjectId.isValid(groupId)) {
       return next(new AppError(`Invalid group  ID`, 400));

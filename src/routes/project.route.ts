@@ -1,12 +1,14 @@
 import express from "express";
 import projectController from "./../controllers/project.controller";
 import Protected from "../middlewares/auth.middleware";
+import { restrict } from "./../middlewares/restrictions";
+
 import uploadDocumentsControllers from "../controllers/uploadDocuments.controllers";
 const router = express.Router();
 
 router.use(Protected); // this will protect all the middlewares under it from users that are not logged in
 
-router.post("/", projectController.createProject);
+router.post("/", restrict("student"), projectController.createProject);
 router.get("/", projectController.getAllProjects);
 router.patch(
   "/:id",

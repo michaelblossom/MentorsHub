@@ -15,7 +15,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
     },
     maximumGroupSize: {
       type: Number,
-      required: [true, "A group must have a maximum size size"],
+      // required: [true, "A group must have a maximum size size"],
     },
     users: [
       {
