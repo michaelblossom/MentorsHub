@@ -115,6 +115,7 @@ const verifyAccount = catchAsync(
       otpExpires,
       createdAt,
       updatedAt,
+      isVerified,
       __v,
       ...rest
     } = user.toObject();

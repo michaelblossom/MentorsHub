@@ -21,13 +21,6 @@ const multerFilter = (
   file: Express.Multer.File,
   cb: FileFilterCallback
 ) => {
-  //   if (file.mimetype.startsWith("application")) {
-  //     cb(null, true);
-  //   } else {
-  //     //     // cb(new Error("Only PDF and Word documents are allowed"), false);
-
-  //     cb(new AppError("Only PDF and Word documents are allowed", 400), false);
-  //   }
   const allowedMimeTypes = [
     "application/pdf",
     "application/msword", // .doc
@@ -37,8 +30,6 @@ const multerFilter = (
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    // cb(new Error("Only PDF and Word documents are allowed"), false);
-
     cb(new AppError("Only PDF and Word documents are allowed", 400), false);
   }
 };
