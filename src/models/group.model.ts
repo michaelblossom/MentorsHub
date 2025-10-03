@@ -21,6 +21,7 @@ const groupSchema = new mongoose.Schema<IGroup>(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
+        unique: true,
       },
     ],
     archive: {

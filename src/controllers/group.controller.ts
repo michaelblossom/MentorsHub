@@ -10,12 +10,58 @@ import { runInNewContext } from "vm";
 import sendEmail from "../utils/email";
 
 // get All groups
+
 const getAllGroups = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const groups = await Group.find();
+    // filtering the query
+    const queryObj = { ...req.query };
+    const excludedFields: string[] = ["page", "limit", "sort", "fields"];
+    excludedFields.forEach((exfields) => delete queryObj[exfields]);
+
+    // advanced filtering
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+
+    // const books = await Book.find(queryObj);
+    let query = Group.find(JSON.parse(queryStr));
+
+    // SORTING
+    if (req.query.sort) {
+      const sortBy = (req.query.sort as any).split(",").join(" ");
+      query = query.sort(sortBy);
+    } else {
+      query.sort("-createdAt");
+    }
+
+    // FIELD LIMITING
+
+    if (req.query.fields) {
+      const fields = (req.query.fields as any).split(",").join(" ");
+      query = query.select(fields);
+    } else {
+      query.select("-__v");
+    }
+
+    // PAGINATION
+    const page: number = Number(req.query.page) || 1;
+    const limit: number = Number(req.query.limit) || 100;
+    const skip: number = (page - 1) * limit;
+    query = query.skip(skip).limit(limit);
+
+    if (req.query.page) {
+      const numGroups = await Group.estimatedDocumentCount();
+      if (skip >= numGroups) {
+        return next(new AppError("The page you request does not exist", 404));
+      }
+    }
+
+    // executing the query
+    const groups = await query;
+
     res.status(200).json({
       status: "success",
       result: groups.length,
+
       data: {
         groups: groups,
       },
@@ -60,140 +106,10 @@ const createGroup = catchAsync(
   }
 );
 
-// const addUserToGroup = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const { groupId, userId } = req.body;
-
-//     //Validate input IDs
-//     if (
-//       !mongoose.Types.ObjectId.isValid(groupId) ||
-//       !mongoose.Types.ObjectId.isValid(userId)
-//     ) {
-//       return next(new AppError(`Invalid group or user ID`, 400));
-//     }
-
-//     // Find the group that the user will be added in
-//     let group = await Group.findById(groupId);
-//     if (!group) {
-//       return next(new AppError(`No group found with this ID:${groupId}`, 404));
-//     }
-
-//     // Find the user to be added to the group
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return next(new AppError(`No user found with this ID:${userId}`, 404));
-//     }
-
-//     if (user.role === "admin") {
-//       return next(
-//         new AppError(
-//           `Only students and supervisors that can be added to :${group.name}`,
-//           400
-//         )
-//       );
-//     }
-//     // // Check if user is a supervisor and add them to the group
-//     if (user.role === "supervisor") {
-//       if (group.supervisor) {
-//         return next(
-//           new AppError(`Group ${group.name} already has a supervisor: `, 400)
-//         );
-//       }
-
-//       const addedSupervisor = await Group.findByIdAndUpdate(
-//         groupId,
-//         { $set: { supervisor: userId } },
-//         { new: true, runValidators: true }
-//       );
-
-//       try {
-//         await sendEmail({
-//           email: user.email,
-//           subject: "Project Group Notification",
-//           html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been added to : ${group.name}<h1>`,
-//         });
-
-//         return res.status(201).json({
-//           status: "success",
-//           message: "Supervisor successfully added to group",
-//           data: {
-//             group: addedSupervisor,
-//           },
-//         });
-//       } catch (error) {
-//         // await Group.findByIdAndUpdate(
-//         //   groupId,
-//         //   { $pull: { supervisor: userId } },
-//         //   { new: true }
-//         // );
-//         group = await Group.findByIdAndUpdate(
-//           groupId,
-//           { $addToSet: { users: userId } },
-//           { new: true }
-//         );
-//         return next(
-//           new AppError("There is an error in sending the mail. Try again", 500)
-//         );
-//       }
-//     }
-
-//     // Check if user is already in group
-//     // if (group.users.includes(user._id)) {
-//     //   return next(new AppError(`User already in group`, 400));
-//     // }
-//     if (group.users.some((u: any) => u.toString() === user._id.toString())) {
-//       return next(new AppError(`User already in group`, 400));
-//     }
-
-//     // Check if users in the group are up to 3
-//     if (group.users.length >= group.maximumGroupSize) {
-//       return next(
-//         new AppError(
-//           `${groupId.name} has reached it's maximum number of users:`,
-//           400
-//         )
-//       );
-//     }
-
-//     // Add user to group
-//     group = await Group.findByIdAndUpdate(
-//       groupId,
-//       { $push: { users: userId } },
-//       { new: true }
-//     );
-
-//     try {
-//       await sendEmail({
-//         email: user.email,
-//         subject: "Project Group Notification",
-//         html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been added to : ${group.name}<h1>`,
-//       });
-//       // sending response
-//       res.status(201).json({
-//         status: "success",
-//         message: "User successfully added from group",
-//         data: {
-//           group: group,
-//         },
-//       });
-//     } catch (error) {
-//       // if there is an error sending the email, remove the user from the group
-//       await Group.findByIdAndUpdate(
-//         groupId,
-//         { $pull: { users: userId } },
-//         { new: true }
-//       );
-//       return next(
-//         new AppError("There is an error in sending the mail. Try again", 500)
-//       );
-//     }
-//   }
-// );
 export const addUserToGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { groupId, userId } = req.body;
 
-    // Validate input IDs
     if (
       !mongoose.Types.ObjectId.isValid(groupId) ||
       !mongoose.Types.ObjectId.isValid(userId)
@@ -201,64 +117,169 @@ export const addUserToGroup = catchAsync(
       return next(new AppError(`Invalid group or user ID`, 400));
     }
 
-    // Find the group
-    let group = await Group.findById(groupId);
-    if (!group) {
-      return next(new AppError(`No group found `, 404));
+    const user = await User.findById(userId);
+    if (!user) return next(new AppError(`No user found`, 404));
+
+    if (user.role === "admin" || user.role === "supervisor") {
+      return next(new AppError(`Only students can be added to groups`, 400));
     }
 
-    // Find the user
+    // Update group safely (atomic operation)
+    const updatedGroup = await Group.findOneAndUpdate(
+      { _id: groupId, users: { $ne: userId } }, // ensure user not already in group
+      { $addToSet: { users: userId } }, // add user if not exists
+      { new: true }
+    );
+
+    if (!updatedGroup) {
+      return next(new AppError("User already in this group ", 400));
+    }
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: "Project Group Notification",
+        html: `<h1>Hi ${user.firstName} ${user.lastName}, you have been added to ${updatedGroup.name}</h1>`,
+      });
+
+      res.status(201).json({
+        status: "success",
+        message: "User successfully added to group",
+        data: { group: updatedGroup },
+      });
+    } catch (error) {
+      // Rollback if email fails
+      await Group.findByIdAndUpdate(
+        groupId,
+        { $pull: { users: userId } },
+        { new: true }
+      );
+      return next(new AppError("Error sending email. Try again.", 500));
+    }
+  }
+);
+
+// const removeUserFromGroup = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     //getting the groupId and UserId from the body
+//     const { groupId, userId } = req.body;
+
+//     // checking if the ObjectIds provided is valid
+//     if (
+//       !mongoose.Types.ObjectId.isValid(groupId) ||
+//       !mongoose.Types.ObjectId.isValid(userId)
+//     ) {
+//       return next(new AppError(`Invalid group or user ID`, 400));
+//     }
+
+//     //Check if group exists
+//     const group = await Group.findById(groupId);
+//     if (!group) {
+//       return next(new AppError(`No group found `, 404));
+//     }
+
+// Check if user exists
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return next(new AppError(`User not found`, 404));
+//     }
+
+//     // Check if user is actually in the group and also get the index of the user in the users array
+//     const userIndex = group.users.findIndex(
+//       (id: any) => id.toString() === user._id.toString()
+//     );
+
+//     if (userIndex === -1) {
+//       return next(new AppError(`User not found in the group `, 404));
+//     }
+
+//     // Remove the user from the group
+//     group.users.splice(userIndex, 1);
+//     await group.save();
+//     try {
+//       await sendEmail({
+//         email: user.email,
+//         subject: "Project Group Notification",
+//         html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been removed from : ${group.name}<h1>`,
+//       });
+//       // sending response
+//       res.status(201).json({
+//         status: "success",
+//         message: "User successfully removed from group",
+//         data: {
+//           group: group,
+//         },
+//       });
+//     } catch (error) {
+//       // if there is an error sending email, add the user back to the group
+//       await Group.findByIdAndUpdate(
+//         groupId,
+//         { $push: { users: userId } },
+//         { new: true }
+//       );
+//       return next(
+//         new AppError("There is an error in sending the mail. Try again", 500)
+//       );
+//     }
+
+//     return res.status(200).json({
+//       message: "User successfully removed from group",
+//       group,
+//     });
+//   }
+// );
+const removeUserFromGroup = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { groupId, userId } = req.body;
+
+    // Validate IDs
+    if (
+      !mongoose.Types.ObjectId.isValid(groupId) ||
+      !mongoose.Types.ObjectId.isValid(userId)
+    ) {
+      return next(new AppError(`Invalid group or user ID`, 400));
+    }
+
+    // Find group
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return next(new AppError(`No group found`, 404));
+    }
+
+    // Find user
     const user = await User.findById(userId);
     if (!user) {
-      return next(new AppError(`No user found `, 404));
+      return next(new AppError(`User not found`, 404));
     }
 
-    // Prevent adding admin or supervisor
-    if (user.role === "admin" || user.role === "supervisor") {
-      return next(
-        new AppError(`Only students can be added to group: ${group.name}`, 400)
-      );
-    }
-
-    // Check if user already exists in group
-    const alreadyInGroup = group.users.some(
-      (u: any) => u.toString() === user._id.toString()
+    // ✅ Ensure proper ObjectId comparison
+    const userIndex = group.users.findIndex((id: mongoose.Types.ObjectId) =>
+      id.equals(user._id)
     );
-    if (alreadyInGroup) {
-      return next(new AppError(`User already in this group`, 400));
+
+    if (userIndex === -1) {
+      return next(new AppError(`User not found in the group`, 404));
     }
 
-    // Check group capacity
-    if (group.users.length >= group.maximumGroupSize) {
-      return next(
-        new AppError(
-          `Group ${group.name} has reached its maximum capacity`,
-          400
-        )
-      );
-    }
-
-    // Add user to group
-    group.users.push(user._id);
+    // Remove user
+    group.users.splice(userIndex, 1);
     await group.save();
 
     try {
       await sendEmail({
         email: user.email,
         subject: "Project Group Notification",
-        html: `<h1>Hi ${user.firstName} ${user.lastName}, you have been added to ${group.name}</h1>`,
+        html: `<h1>Hi ${user.firstName} ${user.lastName}, you have been removed from ${group.name}</h1>`,
       });
 
-      res.status(201).json({
+      return res.status(200).json({
         status: "success",
-        message: "User successfully added to group",
+        message: "User successfully removed from group",
         data: { group },
       });
     } catch (error) {
-      // rollback if email fails
-      group.users = group.users.filter(
-        (u: any) => u.toString() !== user._id.toString()
-      );
+      // Rollback on email failure
+      group.users.push(user._id);
       await group.save();
 
       return next(
@@ -268,75 +289,6 @@ export const addUserToGroup = catchAsync(
   }
 );
 
-const removeUserFromGroup = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    //getting the groupId and UserId from the body
-    const { groupId, userId } = req.body;
-
-    // checking if the ObjectIds provided is valid
-    if (
-      !mongoose.Types.ObjectId.isValid(groupId) ||
-      !mongoose.Types.ObjectId.isValid(userId)
-    ) {
-      return next(new AppError(`Invalid group or user ID`, 400));
-    }
-
-    //Check if group exists
-    const group = await Group.findById(groupId);
-    if (!group) {
-      return next(new AppError(`No group found `, 404));
-    }
-
-    // Check if user exists
-    const user = await User.findById(userId);
-    if (!user) {
-      return next(new AppError(`User not found`, 404));
-    }
-
-    // Check if user is actually in the group and also get the index of the user in the users array
-    const userIndex = group.users.findIndex(
-      (id: any) => id.toString() === user._id.toString()
-    );
-
-    if (userIndex === -1) {
-      return next(new AppError(`User not found in the group `, 404));
-    }
-
-    // Remove the user from the group
-    group.users.splice(userIndex, 1);
-    await group.save();
-    try {
-      await sendEmail({
-        email: user.email,
-        subject: "Project Group Notification",
-        html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been removed from : ${group.name}<h1>`,
-      });
-      // sending response
-      res.status(201).json({
-        status: "success",
-        message: "User successfully removed from group",
-        data: {
-          group: group,
-        },
-      });
-    } catch (error) {
-      // if there is an error sending email, add the user back to the group
-      await Group.findByIdAndUpdate(
-        groupId,
-        { $push: { users: userId } },
-        { new: true }
-      );
-      return next(
-        new AppError("There is an error in sending the mail. Try again", 500)
-      );
-    }
-
-    return res.status(200).json({
-      message: "User successfully removed from group",
-      group,
-    });
-  }
-);
 // archiving  a group
 const archiveGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
