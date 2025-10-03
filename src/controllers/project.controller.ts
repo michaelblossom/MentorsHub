@@ -177,9 +177,7 @@ const createProject = catchAsync(
     );
 
     if (!userExists) {
-      return next(
-        new AppError(`User does not exist in  group :${group.name}`, 400)
-      );
+      return next(new AppError(`User does not exist in :${group.name}`, 400));
     }
 
     const project: Partial<IProject> = {
@@ -275,7 +273,7 @@ const getProjectByUser = catchAsync(
     const id = (req as any).user.id;
     const project = await Project.findOne({ userId: id });
     if (!project) {
-      return next(new AppError("No project found ", 404));
+      return next(new AppError("No project by the user found ", 404));
     }
     // destructuring the project
     // const { createdAt, updatedAt, __v, ...rest } = project.toObject();

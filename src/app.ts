@@ -12,9 +12,13 @@ import reviewRouter from "./routes/review.route";
 import cookieParser from "cookie-parser";
 
 import morgan from "morgan";
-const rateLimit = require("express-rate-limit"); //npm package that prevents multiple request from one Ip-address
+import ratelimit from "express-rate-limit"; //npm package to regulate multiple request from one Ip-address
+import helmet from "helmet";
 
 const app = express();
+
+// implementing helmet(security http header)
+app.use(helmet());
 
 // Global MIDDLEWARES'
 if (process.env.NODE_ENV === "development") {
@@ -22,7 +26,7 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // ratelimiter for regulating request from same ip
-const limiter = rateLimit({
+const limiter = ratelimit({
   max: 200,
   windowMs: 60 * 60 * 1000,
   message: "Too many request from this Ip, please try again in an hour time",
