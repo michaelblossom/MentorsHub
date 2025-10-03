@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(Protected); // this will protect all the middlewares under it from users that are not logged in
 
 router.post("/", restrict("student"), projectController.createProject);
-router.get("/", projectController.getAllProjects);
+router.get("/", restrict("supervisor"), projectController.getAllProjects);
 router.patch(
   "/:id",
   restrict("student"),

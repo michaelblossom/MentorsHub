@@ -20,22 +20,79 @@ const filterObj = (obj: any, ...allowedFields: string[]) => {
   return newObj;
 };
 
-// get All groups
+// get All projectss
+// const getAllProjects = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     const id = (req as any).user.id;
+//     // check if the user fetching all the projects is a supervisor
+//     const user = await User.findById(id);
+//     if (!user) {
+//       return next(new AppError(`No user found with this ID:${id}`, 400));
+//     }
+//     console.log(user);
+//     if (user?.role !== "supervisor") {
+//       return next(
+//         new AppError("you do not have permission to perforn this action", 403)
+//       );
+//     }
+//     const projects = await Project.find();
+
+//     res.status(200).json({
+//       status: "success",
+//       result: projects.length,
+
+//       data: {
+//         projects: projects,
+//       },
+//     });
+//   }
+// );
 const getAllProjects = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const id = (req as any).user.id;
-    // check if the user fetching all the projects is a supervisor
-    const user = await User.findById(id);
-    if (!user) {
-      return next(new AppError(`No user found with this ID:${id}`, 400));
+    // filtering the query
+    const queryObj = { ...req.query };
+    const excludedFields: string[] = ["page", "limit", "sort", "fields"];
+    excludedFields.forEach((exfields) => delete queryObj[exfields]);
+
+    // advanced filtering
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+
+    // const books = await Book.find(queryObj);
+    let query = Project.find(JSON.parse(queryStr));
+
+    // SORTING
+    if (req.query.sort) {
+      const sortBy = (req.query.sort as any).split(",").join(" ");
+      query = query.sort(sortBy);
+    } else {
+      query.sort("-createdAt");
     }
-    console.log(user);
-    if (user?.role !== "supervisor") {
-      return next(
-        new AppError("you do not have permission to perforn this action", 403)
-      );
+
+    // FIELD LIMITING
+
+    if (req.query.fields) {
+      const fields = (req.query.fields as any).split(",").join(" ");
+      query = query.select(fields);
+    } else {
+      query.select("-__v");
     }
-    const projects = await Project.find();
+
+    // PAGINATION
+    const page: number = Number(req.query.page) || 1;
+    const limit: number = Number(req.query.limit) || 100;
+    const skip: number = (page - 1) * limit;
+    query = query.skip(skip).limit(limit);
+
+    if (req.query.page) {
+      const numProjectss = await Group.estimatedDocumentCount();
+      if (skip >= numProjectss) {
+        return next(new AppError("The page you request does not exist", 404));
+      }
+    }
+
+    // executing the query
+    const projects = await query;
 
     res.status(200).json({
       status: "success",
