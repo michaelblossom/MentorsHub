@@ -11,8 +11,13 @@ router.post("/", restrict("admin"), groupController.createGroup);
 router.post("/add-to-group", restrict("admin"), groupController.addUserToGroup);
 router.post(
   "/remove-from-group",
-
+  restrict("admin"),
   groupController.removeUserFromGroup
+);
+router.post(
+  "/assign-supervisor",
+  restrict("admin"),
+  groupController.assignSupervisor
 );
 router.get(
   "/get-group-stats",

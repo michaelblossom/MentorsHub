@@ -158,81 +158,11 @@ export const addUserToGroup = catchAsync(
     }
   }
 );
-
-// const removeUserFromGroup = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     //getting the groupId and UserId from the body
-//     const { groupId, userId } = req.body;
-
-//     // checking if the ObjectIds provided is valid
-//     if (
-//       !mongoose.Types.ObjectId.isValid(groupId) ||
-//       !mongoose.Types.ObjectId.isValid(userId)
-//     ) {
-//       return next(new AppError(`Invalid group or user ID`, 400));
-//     }
-
-//     //Check if group exists
-//     const group = await Group.findById(groupId);
-//     if (!group) {
-//       return next(new AppError(`No group found `, 404));
-//     }
-
-// Check if user exists
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return next(new AppError(`User not found`, 404));
-//     }
-
-//     // Check if user is actually in the group and also get the index of the user in the users array
-//     const userIndex = group.users.findIndex(
-//       (id: any) => id.toString() === user._id.toString()
-//     );
-
-//     if (userIndex === -1) {
-//       return next(new AppError(`User not found in the group `, 404));
-//     }
-
-//     // Remove the user from the group
-//     group.users.splice(userIndex, 1);
-//     await group.save();
-//     try {
-//       await sendEmail({
-//         email: user.email,
-//         subject: "Project Group Notification",
-//         html: `<h1> Hi ${user.firstName} ${user.lastName}, you have been removed from : ${group.name}<h1>`,
-//       });
-//       // sending response
-//       res.status(201).json({
-//         status: "success",
-//         message: "User successfully removed from group",
-//         data: {
-//           group: group,
-//         },
-//       });
-//     } catch (error) {
-//       // if there is an error sending email, add the user back to the group
-//       await Group.findByIdAndUpdate(
-//         groupId,
-//         { $push: { users: userId } },
-//         { new: true }
-//       );
-//       return next(
-//         new AppError("There is an error in sending the mail. Try again", 500)
-//       );
-//     }
-
-//     return res.status(200).json({
-//       message: "User successfully removed from group",
-//       group,
-//     });
-//   }
-// );
 const removeUserFromGroup = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { groupId, userId } = req.body;
 
-    // Validate IDs
+    // Validate group and user IDs
     if (
       !mongoose.Types.ObjectId.isValid(groupId) ||
       !mongoose.Types.ObjectId.isValid(userId)
@@ -252,7 +182,7 @@ const removeUserFromGroup = catchAsync(
       return next(new AppError(`User not found`, 404));
     }
 
-    // ✅ Ensure proper ObjectId comparison
+    // Ensure proper ObjectId comparison
     const userIndex = group.users.findIndex((id: mongoose.Types.ObjectId) =>
       id.equals(user._id)
     );
@@ -280,6 +210,75 @@ const removeUserFromGroup = catchAsync(
     } catch (error) {
       // Rollback on email failure
       group.users.push(user._id);
+      await group.save();
+
+      return next(
+        new AppError("There was an error sending the email. Try again", 500)
+      );
+    }
+  }
+);
+
+//Assign supervisor to a group
+export const assignSupervisor = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { groupId, supervisorId } = req.body;
+
+    // 1. Find group
+    const group = await Group.findById(groupId);
+    if (!group) {
+      return next(new AppError("Group not found", 404));
+    }
+
+    // 2. Check if group already has a supervisor
+    if (group.supervisor) {
+      return next(new AppError("This group already has a supervisor", 400));
+    }
+
+    // 3. check if supervisor exist
+    const supervisor = await User.findById(supervisorId);
+    if (!supervisor) {
+      return next(new AppError("Supervisor not found", 404));
+    }
+
+    // 4. Ensure user role is supervisor
+    if (supervisor.role !== "supervisor") {
+      return next(new AppError("This user is not a supervisor", 400));
+    }
+
+    // 5. Check if supervisor already exists in the group users
+    if (group.users.includes(supervisor._id)) {
+      return next(
+        new AppError("Supervisor already exists in this group as a user", 400)
+      );
+    }
+
+    // 6. Check if group has reached maximum size
+    if (group.users.length >= group.maximumGroupSize) {
+      return next(new AppError("This group has reached its maximum size", 400));
+    }
+
+    // 7. Assign supervisor
+    group.supervisor = supervisor._id;
+    await group.save();
+
+    try {
+      await sendEmail({
+        email: supervisor.email,
+        subject: "Project Group Notification",
+        html: `<h1>Hi ${supervisor.firstName} ${supervisor.lastName}, you have been assigned to supervise  ${group.name}</h1>`,
+      });
+
+      res.status(200).json({
+        status: "success",
+        message: "Supervisor assigned successfully",
+        data: {
+          group,
+        },
+      });
+    } catch (error) {
+      // Rollback on email failure
+      group.supervisor.pop(supervisor._id);
       await group.save();
 
       return next(
@@ -368,6 +367,7 @@ export default {
   createGroup,
   addUserToGroup,
   removeUserFromGroup,
+  assignSupervisor,
   getAllGroups,
   archiveGroup,
   getGroup,
