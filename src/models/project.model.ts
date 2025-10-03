@@ -40,6 +40,7 @@ const projectSchema = new mongoose.Schema<IProject>(
 
   { timestamps: true }
 );
+projectSchema.index({ status: 1 });
 
 const Project = mongoose.model("Project", projectSchema);
 
